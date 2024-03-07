@@ -27,3 +27,9 @@ jobs:
   #         cmd_options: "-a"
   #         issue_title: "ZAP: ${{ matrix.name }}"
   #         target: https://${{ env.PREFIX }}-${{ matrix.name }}.${{ env.DOMAIN }}
+
+  results:
+    name: Results
+    runs-on: ubuntu-22.04
+    steps:
+      - run: echo "Workflow completed successfully!"
