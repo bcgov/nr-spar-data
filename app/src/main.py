@@ -1,59 +1,85 @@
-import logging
+import requests
+import json
+import module.data_synchronization as data_sync
+from logging import config as logging_config
 import os
+import sys
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from .v1.routes.user_routes import router as user_router
-from .core.config import Configuration
+def required_variables_exists():
+    ret = True
+    print("Checking if required variables are defined")
+    
+    if os.environ.get("teste") is None:
+        print("Error: teste variable is None")
+        ret = False
+        
+    if os.environ.get("vtoken") is None:
+        print("Error: vtoken variable is None")
+        ret = False
+        
+    if os.environ.get("vurl") is None:
+        print("Error: vurl variable is None")
+        ret = False
+        
+    if os.environ.get("test_mode") is None:
+        print("Error: test mode variable is None")
+        ret = False
+        
+    if ret:
+        print("Required variable test passed!")
+    else:
+        raise Exception("Not all required variables to execute a instance of Data Sync Engine exists.")
+    
+        
+def testVault():  
+    ret = True
+    
+    teste = os.environ['teste']  # Copying my token from vault
+    if teste =='123':
+        print("Test control variable is ok")
+    else:
+        ret = False
+        print("Test Control variable value is not expected")
+        
+    vault_url = os.environ['vurl']  # Vault url
+    if vault_url.startswith('https://'):
+        print("Vault URL looks good")
+    else:
+        ret = False
+        print("Vault URL value is not expected")
+    
+    vault_token = os.environ['vtoken']  # Copying my token from vault
+    if vault_token.startswith('hvs.'):
+        print("Vault token variable looks good (it not means token is correct)")
+    else:
+        ret = False
+        print("Vault token value is not in the pattern requested")
+    
+    if ret:
+        vault_url = 'https://knox.io.nrs.gov.bc.ca/v1/groups/data/spar/test'
+        headers = {'X-Vault-Token': vault_token}
+        res = requests.get(vault_url, headers=headers)
+        # print(res.text)    
+        j = json.loads(res.text)
+        # print(j)
+        
+    else:
+        print("Vault cannot be reached as required variables are not correctly informed")
 
-api_prefix_v1 = "/api/v1"
-logging.getLogger("uvicorn").handlers.clear()  # removes duplicated logs
 
-OpenAPIInfo = {
-    "title": "FastAPI template for quickstart openshift",
-    "version": "0.1.0",
-    "description": "A boilerplate for FastAPI with SQLAlchemy, Postgres"
-}
-tags_metadata = [
-    {
-        "name": "FastAPI template for quickstart openshift",
-        "description": "A quickstart template for FastAPI with SQLAlchemy, Postgres",
-    },
-]
-
-app = FastAPI(title=OpenAPIInfo["title"],
-              version=OpenAPIInfo["version"],
-              openapi_tags=tags_metadata, )
-origins: list[str] = [
-    "http://localhost*",
-]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-# Add filter to the logger
-
-
-@app.get("/")
-async def root():
-    return {"message": "Route verification endpoints"}
-
-
-app.include_router(user_router,
-                   prefix=api_prefix_v1 + '/user',
-                   tags=["User CRUD"])
-
-
-# Define the filter
-class EndpointFilter(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
-        return record.args and len(record.args) >= 3 and record.args[2] != "/"
-
-
-# Add filter to the logger
-logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
+def main() -> None:
+    logging_config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"), 
+                              disable_existing_loggers=False)   
+    data_sync.data_sync()    
+    
+if __name__ == '__main__':
+    definitiion_of_yes = ["Y","YES","1","T","TRUE"]
+    this_is_a_test = sys.argv[1]
+    if this_is_a_test in definitiion_of_yes:
+        print("Executing in Test mode")
+        required_variables_exists()
+        testVault()
+        
+    else:
+        main()
+   
