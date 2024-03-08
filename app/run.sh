@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo nounset
 
+### Usage
+# ./run.sh to run the application
+# ./run.sh setup to setup, then run
 
 ### Prerequisites
 
@@ -15,7 +18,7 @@ set -euo nounset
 PYVER=3.10.13
 
 export COMMAND=${1:-}
-if [ "${COMMAND}" == "local" ]; then
+if [ "${COMMAND}" == "setup" ]; then
   [ -z "${PYENV_ROOT}" ]|| export PYENV_ROOT="$HOME/.pyenv"
   command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
   eval "$(pyenv init -)"
