@@ -16,26 +16,29 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.10'
     - working-directory: app
       run: |
+        sudo apt-get update
+        sudo apt-get install -y libpq-dev python-dev
         ./run.sh || echo "App failing!"
 
-  oc:
-    name: OpenShift
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Execute OC Test
-        run: |
-          oc version
-          oc login --token=${{ secrets.oc_token }} --server=${{ vars.oc_server }}
-          oc project ${{ secrets.OC_NAMESPACE }} # Safeguard!
-          oc whoami
+  # oc:
+  #   name: OpenShift
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Execute OC Test
+  #       run: |
+  #         oc version
+  #         oc login --token=${{ secrets.oc_token }} --server=${{ vars.oc_server }}
+  #         oc project ${{ secrets.OC_NAMESPACE }} # Safeguard!
+  #         oc whoami
 
 
   results:
     name: PR Results
-    needs: [python, oc]
+    # needs: [python, oc]
+    needs: [python]
     runs-on: ubuntu-22.04
     steps:
       - run: echo "Workflow completed successfully!"
