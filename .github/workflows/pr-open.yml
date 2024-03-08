@@ -19,7 +19,7 @@ jobs:
         python-version: '3.12'
     - working-directory: app
       run: |
-      ./run.sh || echo "App failing!"
+        ./run.sh || echo "App failing!"
 
   oc:
     name: OpenShift
