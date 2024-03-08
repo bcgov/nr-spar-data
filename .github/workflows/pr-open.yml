@@ -14,20 +14,18 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+      - run: |
+          # Install packages
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev python-dev-is-python3
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
-      - env:
-          PIP_CACHE_DIR: ./data
-          PIP_DISABLE_PIP_VERSION_CHECK: 1
-        working-directory: app
+      - working-directory: app
         run: |
-          # Prepare python environment
-          sudo apt-get update
-          sudo apt-get install -y libpq-dev python-dev-is-python3
-          pip install -r ./requirements.txt
-
+          # Install dependencies
+          pip install -r ./requirements.txt --disable-pip-version-check
       - working-directory: app/src/
         run: |
           # Run main.py
