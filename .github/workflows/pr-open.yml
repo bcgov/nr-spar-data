@@ -27,21 +27,20 @@ jobs:
       - working-directory: app/src/
         run: python main.py || echo "App failing!"
 
-  # oc:
-  #   name: OpenShift
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - name: Execute OC Test
-  #       run: |
-  #         oc version
-  #         oc login --token=${{ secrets.oc_token }} --server=${{ vars.oc_server }}
-  #         oc project ${{ secrets.OC_NAMESPACE }} # Safeguard!
-  #         oc whoami
+  oc:
+    name: OpenShift
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Execute OC Test
+        run: |
+          oc version
+          oc login --token=${{ secrets.oc_token }} --server=${{ vars.oc_server }}
+          oc project ${{ secrets.OC_NAMESPACE }} # Safeguard!
+          oc whoami
 
   results:
     name: PR Results
-    # needs: [python, oc]
-    needs: [python]
+    needs: [python, oc]
     runs-on: ubuntu-22.04
     steps:
       - run: echo "Workflow completed successfully!"
