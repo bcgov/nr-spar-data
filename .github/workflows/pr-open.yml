@@ -22,8 +22,13 @@ jobs:
         PIP_DISABLE_PIP_VERSION_CHECK: 1
       working-directory: app
       run: |
+        # Prepare python environment
         sudo apt-get update
         sudo apt-get install -y libpq-dev python-dev-is-python3
+    
+    - working-directory: app
+      run: |
+        # Run main.py
         pip install -r ./requirements.txt || \
           echo "App failing!"
 
