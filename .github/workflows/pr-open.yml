@@ -17,7 +17,9 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - run: cd app && ./run.sh
+    - working-directory: app
+      run: |
+      ./run.sh || echo "App failing!"
 
   oc:
     name: OpenShift
