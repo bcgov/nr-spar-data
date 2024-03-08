@@ -14,23 +14,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          # Install packages
-          sudo apt-get update
-          sudo apt-get install -y libpq-dev python-dev-is-python3
+      - run: sudo apt-get update && sudo apt-get install -y libpq-dev python-dev-is-python3
       - uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
       - working-directory: app
-        run: |
-          # Install dependencies
-          pip install -r ./requirements.txt --disable-pip-version-check
+        run: pip install -r ./requirements.txt --disable-pip-version-check
       - working-directory: app/src/
-        run: |
-          # Run main.py
-          python main.py || \
-            echo "App failing!"
+        run: python main.py || echo "App failing!"
 
   # oc:
   #   name: OpenShift
@@ -42,7 +34,6 @@ jobs:
   #         oc login --token=${{ secrets.oc_token }} --server=${{ vars.oc_server }}
   #         oc project ${{ secrets.OC_NAMESPACE }} # Safeguard!
   #         oc whoami
-
 
   results:
     name: PR Results
