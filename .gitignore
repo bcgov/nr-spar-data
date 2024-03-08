@@ -124,3 +124,7 @@ test-report.xml
 # Python
 **/venv
 **/.venv
+
+# Data
+app/data/
+**/__pycache__
