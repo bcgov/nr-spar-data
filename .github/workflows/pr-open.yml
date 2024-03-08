@@ -33,6 +33,7 @@ jobs:
 
   results:
     name: PR Results
+    needs: [python, oc]
     runs-on: ubuntu-22.04
     steps:
       - run: echo "Workflow completed successfully!"

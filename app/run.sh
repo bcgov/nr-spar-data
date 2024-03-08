@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euxo nounset
+set -euo nounset
 
 
 ### Prerequisites
