@@ -5,13 +5,14 @@ set -euo nounset
 ### Prerequisites
 
 # pyenv - https://github.com/pyenv/pyenv#installation
+# bz2 - sudo dnf -y install bzip2-devel
 # pg_conf - sudo dnf -y install libpq-devel
 
 
 ### Setup
 
 # Several packages are not working for python 3.12
-PYVER=3.10
+PYVER=3.10.13
 
 export COMMAND=${1:-}
 if [ "${COMMAND}" == "local" ]; then
@@ -35,4 +36,5 @@ python -m pip install -r ./requirements.txt --cache-dir ./data
 ### Run
 
 cd src
+echo "Running main.py"
 python main.py
