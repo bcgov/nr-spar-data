@@ -13,8 +13,6 @@ parameters:
   - name: IMAGE_TAG
     description: Image tag to use
     value: latest
-  - name: DOMAIN
-    value: apps.silver.devops.gov.bc.ca
   - name: CPU_REQUEST
     value: "25m"
   - name: MEMORY_REQUEST
@@ -23,14 +21,6 @@ parameters:
     value: "75m"
   - name: MEMORY_LIMIT
     value: "150Mi"
-  - name: CPU_REQUEST_INIT
-    value: "125m"
-  - name: MEMORY_REQUEST_INIT
-    value: "100Mi"
-  - name: CPU_LIMIT_INIT
-    value: "250m"
-  - name: MEMORY_LIMIT_INIT
-    value: "250Mi"
   - name: MIN_REPLICAS
     description: The minimum amount of replicas for the horizontal pod autoscaler.
     value: "1"
@@ -93,25 +83,8 @@ objects:
               imagePullPolicy: Always
               name: "${NAME}"
               env:
-                - name: POSTGRES_HOST
-                  value: "${NAME}-${ZONE}-database:5432"
-                - name: POSTGRES_DB
-                  valueFrom:
-                    secretKeyRef:
-                      name: "${NAME}-${ZONE}-database"
-                      key: database-name
-                - name: POSTGRES_PASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: "${NAME}-${ZONE}-database"
-                      key: database-password
-                - name: POSTGRES_USER
-                  valueFrom:
-                    secretKeyRef:
-                      name: "${NAME}-${ZONE}-database"
-                      key: database-user
                 - name: PYTHONPATH
-                  value: /application/app/src
+                  value: /app/src
               ports:
                 - containerPort: 3000
                   protocol: TCP
