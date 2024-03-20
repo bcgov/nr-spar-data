@@ -55,9 +55,9 @@ jobs:
           tag_fallback: latest
           triggers: ('sync/')
 
-  results:
-    name: PR Results
-    needs: [python, oc]
-    runs-on: ubuntu-22.04
-    steps:
-      - run: echo "Workflow completed successfully!"
+  # results:
+  #   name: PR Results
+  #   needs: [python, oc]
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - run: echo "Workflow completed successfully!"
