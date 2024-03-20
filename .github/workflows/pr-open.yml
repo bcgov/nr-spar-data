@@ -55,6 +55,21 @@ jobs:
           tag_fallback: latest
           triggers: ('sync/')
 
+deploys:
+  name: Deploys
+  needs: [builds]
+  runs-on: ubuntu-latest
+  steps:
+    - name: Deploys
+      uses: bcgov-nr/action-deployer-openshift.yml@2.1.0
+      with:
+        file: sync/openshift.deploy.yml
+        oc_namespace: ${{ secrets.OC_NAMESPACE }}
+        oc_server: ${{ vars.OC_SERVER }}
+        oc_token: ${{ secrets.OC_TOKEN }}
+        overwrite: true
+        triggers: ('sync/')
+
   # results:
   #   name: PR Results
   #   needs: [python, oc]
