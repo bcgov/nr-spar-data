@@ -40,20 +40,10 @@ parameters:
   - name: REGISTRY
     description: Container registry to import from (internal is image-registry.openshift-image-registry.svc:5000)
     value: ghcr.io
-  - name: ORG_NAME
-    description: Organization name, e.g. bcgov
-    value: bcgov
   - name: PROMOTE
     description: Image (namespace/name:tag) to promote/import
     value: bcgov/nr-spar-data/sync:test
 objects:
-  - apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      name: "${COMPONENT}-configmap"
-      namespace: logger-conf
-      labels:
-        app: "${NAME}-${ZONE}"
   - apiVersion: v1
     kind: ImageStream
     metadata:
@@ -122,9 +112,6 @@ objects:
                       key: database-user
                 - name: PYTHONPATH
                   value: /application/app/src
-              volumeMounts:
-                - mountPath: /opt
-                  name: logger-conf
               ports:
                 - containerPort: 3000
                   protocol: TCP
