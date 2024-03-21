@@ -79,7 +79,8 @@ objects:
             spec:
               containers:
                 - name: ${NAME}-${ZONE}-${COMPONENT}
-                  image: hello-world
+                  image: "${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}"
+                  imagePullPolicy: Always
               restartPolicy: "Never"
               terminationGracePeriodSeconds: 30
               activeDeadlineSeconds: 1600
