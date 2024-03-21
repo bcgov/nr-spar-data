@@ -1,0 +1,88 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  app: ${NAME}-${ZONE}
+  app.kubernetes.io/part-of: ${NAME}-${ZONE}
+parameters:
+  - name: NAME
+    description: Product name
+    value: nr-spar-data
+  - name: COMPONENT
+    description: Component name
+    value: etl
+  - name: ZONE
+    description: Deployment zone, e.g. pr-### or prod
+    required: true
+  - name: IMAGE_TAG
+    description: Image tag to use
+    value: latest
+  - name: RESTORE_DIR
+    description: Folder that contains initialization scripts
+    value: /tmp/restore
+  - name: REGISTRY
+    description: Container registry to import from (internal is image-registry.openshift-image-registry.svc:5000)
+    value: ghcr.io  
+  - name: PVC_SIZE
+    description: Volume space available for data, e.g. 512Mi, 2Gi.
+    value: 256Mi  
+  - name: PROMOTE
+    description: Image (namespace/name:tag) to promote/import
+    required: true
+  - name: "BACKUP_DIR"
+    description: "The name of the root backup directory"
+    required: true
+    value: "/tmp/backup"
+  - name: "NUM_BACKUPS"
+    description: "The number of backup files to be retained.  Used for the `daily` backup strategy.  Ignored when using the `rolling` backup strategy."
+    required: false
+    value: "5"  
+  - name: "JOB_SERVICE_ACCOUNT"
+    description: "Name of the Service Account To Exeucte the Job As."
+    value: "default"
+    required: true
+  - name: "SUCCESS_JOBS_HISTORY_LIMIT"
+    description: "The number of successful jobs that will be retained"
+    value: "5"
+    required: true
+  - name: "FAILED_JOBS_HISTORY_LIMIT"
+    description: "The number of failed jobs that will be retained"
+    value: "2"
+    required: true
+  - name: "JOB_BACKOFF_LIMIT"
+    description: "The number of attempts to try for a successful job outcome"
+    value: "0"
+objects: 
+  - kind: CronJob
+    apiVersion: "batch/v1"
+    metadata:
+      name: ${NAME}-${ZONE}-${COMPONENT}
+      labels:
+        app: ${NAME}-${ZONE}
+        cronjob: ${NAME}-${ZONE}
+    spec:
+      schedule: "0 0 * * *"
+      concurrencyPolicy: "Replace"
+      successfulJobsHistoryLimit: ${{SUCCESS_JOBS_HISTORY_LIMIT}}
+      failedJobsHistoryLimit: ${{FAILED_JOBS_HISTORY_LIMIT}}
+      jobTemplate:
+        metadata:
+          labels:
+            app: ${NAME}-${ZONE}
+            cronjob: ${NAME}-${ZONE}
+        spec:
+          backoffLimit: ${{JOB_BACKOFF_LIMIT}}
+          template:
+            metadata:
+              labels:
+                app: ${NAME}-${ZONE}
+                cronjob: ${NAME}-${ZONE}
+            spec:
+              containers:
+                - name: ${NAME}-${ZONE}-${COMPONENT}
+                  image: hello-world
+              restartPolicy: "Never"
+              terminationGracePeriodSeconds: 30
+              activeDeadlineSeconds: 1600
+              dnsPolicy: "ClusterFirst"
+              serviceAccountName: "${JOB_SERVICE_ACCOUNT}"
+              serviceAccount: "${JOB_SERVICE_ACCOUNT}"
