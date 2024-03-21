@@ -79,7 +79,7 @@ objects:
             spec:
               containers:
                 - name: ${NAME}-${ZONE}-${COMPONENT}
-                  image: "${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}"
+                  image: ${REGISTRY}/bcgov/${NAME}/sync:${ZONE}
                   imagePullPolicy: Always
               restartPolicy: "Never"
               terminationGracePeriodSeconds: 30
