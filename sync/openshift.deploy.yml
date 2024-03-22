@@ -1,38 +1,42 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 parameters:
+  ### Required
+  - name: ZONE
+    description: Deployment zone, e.g. pr-### or prod
+    required: true
+  - name: PROMOTE
+    description: Image (namespace/name:tag) to promote/import
+    required: true
+
+  ### Optional
   - name: NAME
     description: Module name
     value: nr-spar-data
   - name: COMPONENT
     description: Component name
     value: sync
-  - name: ZONE
-    description: Deployment zone, e.g. pr-### or prod
-    required: true
   - name: IMAGE_TAG
     description: Image tag to use
     value: latest
-  - name: CPU_REQUEST
-    value: "25m"
-  - name: MEMORY_REQUEST
-    value: "50Mi"
-  - name: CPU_LIMIT
-    value: "75m"
-  - name: MEMORY_LIMIT
-    value: "150Mi"
-  - name: MIN_REPLICAS
-    description: The minimum amount of replicas for the horizontal pod autoscaler.
-    value: "1"
-  - name: MAX_REPLICAS
-    description: The maximum amount of replicas for the horizontal pod autoscaler.
-    value: "1"
+  - name: "SUCCESS_JOBS_HISTORY_LIMIT"
+    description: "The number of successful jobs that will be retained"
+    value: "5"
+    required: true
+  - name: "FAILED_JOBS_HISTORY_LIMIT"
+    description: "The number of failed jobs that will be retained"
+    value: "2"
+    required: true
+  - name: "JOB_BACKOFF_LIMIT"
+    description: "The number of attempts to try for a successful job outcome"
+    value: "0"
   - name: REGISTRY
     description: Container registry to import from (internal is image-registry.openshift-image-registry.svc:5000)
     value: ghcr.io
-  - name: PROMOTE
-    description: Image (namespace/name:tag) to promote/import
-    value: bcgov/nr-spar-data/sync:test
+  - name: CRON_MINUTES
+    description: Random number, 0-60, for scheduling cronjobs
+    from: "[0-5]{1}[0-9]{1}"
+    generate: expression
 objects:
   - apiVersion: v1
     kind: ImageStream
@@ -53,7 +57,7 @@ objects:
   - kind: CronJob
     apiVersion: "batch/v1"
     metadata:
-      name: ${NAME}-${ZONE}-${BACKUP_COMPONENT}
+      name: ${NAME}-${ZONE}-${COMPONENT}
       labels:
         app: ${NAME}-${ZONE}
         cronjob: ${NAME}-${ZONE}
