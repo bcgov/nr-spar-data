@@ -28,6 +28,8 @@ jobs:
 
   deploys:
     name: Deploys
+    env:
+      JOB: ${{ githut.event.repository.name }}-sync-${{ github.event.number }}
     needs: [builds]
     runs-on: ubuntu-latest
     steps:
@@ -39,8 +41,8 @@ jobs:
           oc_server: ${{ vars.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: true
-          parameters:
-            -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
+          parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
+          post_rollout: oc create job "${{ env.JOB }}-$(date +%s)" --from=cronjob/${{ env.JOB }}
           triggers: ('sync/')
 
   results:
