@@ -42,7 +42,7 @@ jobs:
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: true
           parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
-          post_rollout: oc create job ${{ env.JOB }} --from=cronjob/${{ env.JOB }} && oc get jobs ${{ env.JOB }} --watch
+          post_rollout: oc create job ${{ env.JOB }} --from=cronjob/${{ env.JOB }} && oc logs -l ${{ env.JOB }} --tail=400 --follow
           triggers: ('sync/')
 
   results:
