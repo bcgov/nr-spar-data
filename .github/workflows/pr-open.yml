@@ -44,6 +44,7 @@ jobs:
           parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
           post_rollout:
             oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }} &&
+            sleep 10 &&
             oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=400 --follow
           triggers: ('sync/')
 
