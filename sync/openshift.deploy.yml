@@ -50,68 +50,55 @@ objects:
             name: "${REGISTRY}/${PROMOTE}"
           referencePolicy:
             type: Local
-  - apiVersion: v1
-    kind: DeploymentConfig
+  - kind: CronJob
+    apiVersion: "batch/v1"
     metadata:
+      name: ${NAME}-${ZONE}-${BACKUP_COMPONENT}
       labels:
-        app: "${NAME}-${ZONE}"
-      name: "${NAME}-${ZONE}-${COMPONENT}"
+        app: ${NAME}-${ZONE}
+        cronjob: ${NAME}-${ZONE}
     spec:
-      replicas: 1
-      triggers:
-        - type: ConfigChange
-        - type: ImageChange
-          imageChangeParams:
-            automatic: true
-            containerNames:
-              - "${NAME}"
-            from:
-              kind: ImageStreamTag
-              name: "${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}"
-      selector:
-        deploymentconfig: "${NAME}-${ZONE}-${COMPONENT}"
-      strategy:
-        type: Rolling
-      template:
+      schedule: "${CRON_MINUTES} 8 * * *" # Run daily at 8:xx AM UTC
+      concurrencyPolicy: "Replace"
+      successfulJobsHistoryLimit: "${{SUCCESS_JOBS_HISTORY_LIMIT}}"
+      failedJobsHistoryLimit: "${{FAILED_JOBS_HISTORY_LIMIT}}"
+      jobTemplate:
         metadata:
           labels:
-            app: "${NAME}-${ZONE}"
-            deploymentconfig: "${NAME}-${ZONE}-${COMPONENT}"
+            app: ${NAME}-${ZONE}
+            cronjob: ${NAME}-${ZONE}
         spec:
-          containers:
-            - image: "${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}"
-              imagePullPolicy: Always
-              name: "${NAME}"
-              env:
-                - name: PYTHONPATH
-                  value: /app/src
-              ports:
-                - containerPort: 3000
-                  protocol: TCP
-              resources:
-                requests:
-                  cpu: "${CPU_REQUEST}"
-                  memory: "${MEMORY_REQUEST}"
-                limits:
-                  cpu: "${CPU_LIMIT}"
-                  memory: "${MEMORY_LIMIT}"
-  - apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      labels:
-        app: "${NAME}-${ZONE}"
-      name: "${NAME}-${ZONE}-${COMPONENT}"
-    spec:
-      scaleTargetRef:
-        apiVersion: apps.openshift.io/v1
-        kind: DeploymentConfig
-        name: "${NAME}-${ZONE}-${COMPONENT}"
-      minReplicas: "${{MIN_REPLICAS}}"
-      maxReplicas: "${{MAX_REPLICAS}}"
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: 100
+          backoffLimit: ${{JOB_BACKOFF_LIMIT}}
+          template:
+            metadata:
+              labels:
+                app: ${NAME}-${ZONE}
+                cronjob: ${NAME}-${ZONE}
+            spec:
+              containers:
+                - name: ${NAME}-${ZONE}
+                  image: "${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}"
+                  env:
+                    - name: POSTGRES_SERVICE
+                      value: "${NAME}-${ZONE}-database"
+                    # - name: POSTGRES_DATABASE
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: "${NAME}-${ZONE}-database"
+                    #       key: "database-name"
+                    # - name: POSTGRES_USER
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${NAME}-${ZONE}-database
+                    #       key: "database-user"
+                    # - name: POSTGRES_PASSWORD
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${NAME}-${ZONE}-database
+                    #       key: "database-password"
+              restartPolicy: "Never"
+              terminationGracePeriodSeconds: 30
+              activeDeadlineSeconds: 1600
+              dnsPolicy: "ClusterFirst"
+              serviceAccountName: "default"
+              serviceAccount: "default"
