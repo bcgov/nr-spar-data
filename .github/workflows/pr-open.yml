@@ -29,7 +29,7 @@ jobs:
   deploys:
     name: Deploys
     env:
-      JOB: ${{ github.event.repository.name }}-${{ github.event.number }}-sync
+      JOB: ${{ github.event.repository.name }}-${{ github.event.number }}-sync-${{ github.run_number }}
     needs: [builds]
     runs-on: ubuntu-latest
     steps:
