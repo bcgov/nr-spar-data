@@ -43,6 +43,7 @@ jobs:
           overwrite: true
           parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
           post_rollout:
+            sleep 10 &&
             oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }} 
             # &&
             # sleep 10 &&
