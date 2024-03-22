@@ -42,10 +42,8 @@ jobs:
           oc_token: ${{ secrets.OC_TOKEN }}
           overwrite: true
           parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
-          post_rollout:
-            sleep 10 &&
-            oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }} 
-            # &&
+          post_rollout: oc auth can-i create jobs
+            # oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }} &&
             # sleep 10 &&
             # oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=400 --follow
           triggers: ('sync/')
