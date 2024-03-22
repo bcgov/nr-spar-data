@@ -25,9 +25,6 @@ parameters:
     description: Random number, 0-60, for scheduling cronjobs
     from: "[0-5]{1}[0-9]{1}"
     generate: expression
-  - name: IMAGESTREAM_TAG
-    description: Image tag to use internally, after import
-    value: latest
   - name: JOB_BACKOFF_LIMIT
     description: "The number of attempts to try for a successful job outcome"
     value: "0"
@@ -41,22 +38,6 @@ parameters:
     description: Source container registry
     value: ghcr.io
 objects:
-  - apiVersion: v1
-    kind: ImageStream
-    metadata:
-      labels:
-        app: "${REPO}-${ZONE}"
-      name: "${REPO}-${ZONE}-${APP}"
-    spec:
-      lookupPolicy:
-        local: false
-      tags:
-        - name: "${IMAGESTREAM_TAG}"
-          from:
-            kind: DockerImage
-            name: "${REGISTRY}/${ORG}/${REPO}/${APP}:${TAG}"
-          referencePolicy:
-            type: Local
   - kind: CronJob
     apiVersion: "batch/v1"
     metadata:
@@ -84,7 +65,7 @@ objects:
             spec:
               containers:
                 - name: ${REPO}-${ZONE}
-                  image: "${REPO}-${ZONE}-${APP}:${IMAGESTREAM_TAG}"
+                  image: "${REGISTRY}/${ORG}/${REPO}/${APP}:${TAG}"
                   env:
                     - name: POSTGRES_SERVICE
                       value: "${REPO}-${ZONE}-database"
