@@ -1,104 +1,107 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 parameters:
-  ### Required
-  - name: ZONE
-    description: Deployment zone, e.g. pr-### or prod
+  ### Required - do not hard code
+  - name: TAG
+    description: Docker tag; e.g. PR-### or prod
     required: true
-  - name: PROMOTE
-    description: Image (namespace/name:tag) to promote/import
+  - name: ZONE
+    description: Deployment zone, e.g. pr-###, test or prod
     required: true
 
-  ### Optional
-  - name: NAME
-    description: Module name
-    value: nr-spar-data
-  - name: COMPONENT
-    description: Component name
+  ### Recommended - suggest hard coding
+  - name: APP
+    description: Application/component name
     value: sync
-  - name: IMAGE_TAG
-    description: Image tag to use
-    value: latest
-  - name: "SUCCESS_JOBS_HISTORY_LIMIT"
-    description: "The number of successful jobs that will be retained"
-    value: "5"
-    required: true
-  - name: "FAILED_JOBS_HISTORY_LIMIT"
-    description: "The number of failed jobs that will be retained"
-    value: "2"
-    required: true
-  - name: "JOB_BACKOFF_LIMIT"
-    description: "The number of attempts to try for a successful job outcome"
-    value: "0"
-  - name: REGISTRY
-    description: Container registry to import from (internal is image-registry.openshift-image-registry.svc:5000)
-    value: ghcr.io
+  - name: ORG
+    description: GitHub organization name
+    value: bcgov
+  - name: REPO
+    description: Repository name
+    value: nr-spar-data
+
+  ### Usually a bad idea - not recommended
   - name: CRON_MINUTES
     description: Random number, 0-60, for scheduling cronjobs
     from: "[0-5]{1}[0-9]{1}"
     generate: expression
+  - name: IMAGESTREAM_TAG
+    description: Image tag to use internally, after import
+    value: latest
+  - name: JOB_BACKOFF_LIMIT
+    description: "The number of attempts to try for a successful job outcome"
+    value: "0"
+  - name: JOB_HISTORY_FAIL
+    description: "The number of failed jobs that will be retained"
+    value: "2"
+  - name: JOB_HISTORY_SUCCESS
+    description: "The number of successful jobs that will be retained"
+    value: "5"
+  - name: REGISTRY
+    description: Source container registry
+    value: ghcr.io
 objects:
   - apiVersion: v1
     kind: ImageStream
     metadata:
       labels:
-        app: "${NAME}-${ZONE}"
-      name: "${NAME}-${ZONE}-${COMPONENT}"
+        app: "${REPO}-${ZONE}"
+      name: "${REPO}-${ZONE}-${APP}"
     spec:
       lookupPolicy:
         local: false
       tags:
-        - name: "${IMAGE_TAG}"
+        - name: "${IMAGESTREAM_TAG}"
           from:
             kind: DockerImage
-            name: "${REGISTRY}/${PROMOTE}"
+            name: "${REGISTRY}/${ORG}/${REPO}/${APP}:${TAG}"
           referencePolicy:
             type: Local
   - kind: CronJob
     apiVersion: "batch/v1"
     metadata:
-      name: ${NAME}-${ZONE}-${COMPONENT}
+      name: ${REPO}-${ZONE}-${APP}
       labels:
-        app: ${NAME}-${ZONE}
-        cronjob: ${NAME}-${ZONE}
+        app: ${REPO}-${ZONE}
+        cronjob: ${REPO}-${ZONE}
     spec:
       schedule: "${CRON_MINUTES} 8 * * *" # Run daily at 8:xx AM UTC
       concurrencyPolicy: "Replace"
-      successfulJobsHistoryLimit: "${{SUCCESS_JOBS_HISTORY_LIMIT}}"
-      failedJobsHistoryLimit: "${{FAILED_JOBS_HISTORY_LIMIT}}"
+      successfulJobsHistoryLimit: "${{JOB_HISTORY_SUCCESS}}"
+      failedJobsHistoryLimit: "${{JOB_HISTORY_FAIL}}"
       jobTemplate:
         metadata:
           labels:
-            app: ${NAME}-${ZONE}
-            cronjob: ${NAME}-${ZONE}
+            app: ${REPO}-${ZONE}
+            cronjob: ${REPO}-${ZONE}
         spec:
           backoffLimit: ${{JOB_BACKOFF_LIMIT}}
           template:
             metadata:
               labels:
-                app: ${NAME}-${ZONE}
-                cronjob: ${NAME}-${ZONE}
+                app: ${REPO}-${ZONE}
+                cronjob: ${REPO}-${ZONE}
             spec:
               containers:
-                - name: ${NAME}-${ZONE}
-                  image: "${NAME}-${ZONE}-${COMPONENT}:${IMAGE_TAG}"
+                - name: ${REPO}-${ZONE}
+                  image: "${REPO}-${ZONE}-${APP}:${IMAGESTREAM_TAG}"
                   env:
                     - name: POSTGRES_SERVICE
-                      value: "${NAME}-${ZONE}-database"
+                      value: "${REPO}-${ZONE}-database"
                     # - name: POSTGRES_DATABASE
                     #   valueFrom:
                     #     secretKeyRef:
-                    #       name: "${NAME}-${ZONE}-database"
+                    #       name: "${REPO}-${ZONE}-database"
                     #       key: "database-name"
                     # - name: POSTGRES_USER
                     #   valueFrom:
                     #     secretKeyRef:
-                    #       name: ${NAME}-${ZONE}-database
+                    #       name: ${REPO}-${ZONE}-database
                     #       key: "database-user"
                     # - name: POSTGRES_PASSWORD
                     #   valueFrom:
                     #     secretKeyRef:
-                    #       name: ${NAME}-${ZONE}-database
+                    #       name: ${REPO}-${ZONE}-database
                     #       key: "database-password"
               restartPolicy: "Never"
               terminationGracePeriodSeconds: 30
