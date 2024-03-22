@@ -10,27 +10,27 @@ concurrency:
 
 jobs:
   # https://github.com/bcgov-nr/action-builder-ghcr
-  builds:
-    name: Builds
-    runs-on: ubuntu-22.04
-    permissions:
-      packages: write
-    timeout-minutes: 10
-    steps:
-      - uses: bcgov-nr/action-builder-ghcr@v2.0.2
-        id: builds
-        with:
-          keep_versions: 50
-          package: sync
-          tag: ${{ github.event.number }}
-          tag_fallback: latest
-          triggers: ('sync/')
+  # builds:
+  #   name: Builds
+  #   runs-on: ubuntu-22.04
+  #   permissions:
+  #     packages: write
+  #   timeout-minutes: 10
+  #   steps:
+  #     - uses: bcgov-nr/action-builder-ghcr@v2.0.2
+  #       id: builds
+  #       with:
+  #         keep_versions: 50
+  #         package: sync
+  #         tag: ${{ github.event.number }}
+  #         tag_fallback: latest
+  #         triggers: ('sync/')
 
   deploys:
     name: Deploys
     env:
       JOB: ${{ github.event.repository.name }}-${{ github.event.number }}-sync
-    needs: [builds]
+    # needs: [builds]
     runs-on: ubuntu-latest
     steps:
       - name: Deploys
@@ -43,7 +43,8 @@ jobs:
           overwrite: true
           parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
           post_rollout:
-            oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }} &&
+            oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }} 
+            # &&
             # sleep 10 &&
             # oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=400 --follow
           triggers: ('sync/')
