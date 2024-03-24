@@ -27,7 +27,7 @@ parameters:
     generate: expression
   - name: JOB_BACKOFF_LIMIT
     description: "The number of attempts to try for a successful job outcome"
-    value: "0"
+    value: "3"
   - name: JOB_HISTORY_FAIL
     description: "The number of failed jobs that will be retained"
     value: "2"
@@ -42,13 +42,12 @@ objects:
     apiVersion: "batch/v1"
     metadata:
       name: ${REPO}-${ZONE}-${APP}
-      finalizers:
-        - foregroundDeletion
       labels:
         app: ${REPO}-${ZONE}
         cronjob: ${REPO}-${ZONE}
     spec:
       schedule: "${CRON_MINUTES} 8 * * *" # Run daily at 8:xx AM UTC
+      startingDeadlineSeconds: 60
       concurrencyPolicy: "Replace"
       successfulJobsHistoryLimit: "${{JOB_HISTORY_SUCCESS}}"
       failedJobsHistoryLimit: "${{JOB_HISTORY_FAIL}}"
@@ -75,5 +74,4 @@ objects:
               terminationGracePeriodSeconds: 30
               activeDeadlineSeconds: 1600
               dnsPolicy: "ClusterFirst"
-              serviceAccountName: "default"
-              serviceAccount: "default"
+              # serviceAccountName: "default"
