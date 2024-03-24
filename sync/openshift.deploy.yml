@@ -67,9 +67,9 @@ objects:
               containers:
                 - name: ${REPO}-${ZONE}
                   image: "${REGISTRY}/${ORG}/${REPO}/${APP}:${TAG}"
-                  env:
-                    - name: POSTGRES_SERVICE
-                      value: "${REPO}-${ZONE}-database"
+                  # env:
+                  #   - name: POSTGRES_SERVICE
+                  #     value: "${REPO}-${ZONE}-database"
                   resources:
                     limits:
                       cpu: 250m
@@ -82,6 +82,6 @@ objects:
               terminationGracePeriodSeconds: 30
               activeDeadlineSeconds: 1600
               dnsPolicy: ClusterFirst
-              # serviceAccountName: "default"
+              serviceAccountName: pipeline
               schedulerName: default-scheduler
 

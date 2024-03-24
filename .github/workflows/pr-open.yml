@@ -59,6 +59,7 @@ jobs:
         run: |
           oc login --token=${{ secrets.OC_TOKEN }} --server=${{ vars.OC_SERVER }}
           oc project ${{ secrets.OC_NAMESPACE }} # Safeguard!
+          oc login --token=$(oc create token deployer) --server=https://api.silver.devops.gov.bc.ca:6443
           oc auth can-i create jobs
           oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }}
           oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=400 --follow
