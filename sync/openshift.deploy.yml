@@ -42,12 +42,12 @@ objects:
     apiVersion: "batch/v1"
     metadata:
       name: ${REPO}-${ZONE}-${APP}
-      finalizers:
-        - kubernetes
-      ownerReferences:
-      - apiVersion: "template.openshift.io/v1"
-        blockOwnerDeletion: finalizers
-        controller: true
+      # finalizers:
+      #   - kubernetes
+      # ownerReferences:
+      #   - apiVersion: "template.openshift.io/v1"
+      #     blockOwnerDeletion: finalizers
+          # controller: "true"
       labels:
         app: ${REPO}-${ZONE}
         cronjob: ${REPO}-${ZONE}
@@ -66,12 +66,12 @@ objects:
           backoffLimit: ${{JOB_BACKOFF_LIMIT}}
           template:
             metadata:
-              finalizers:
-                - kubernetes
-              ownerReferences:
-              - apiVersion: "template.openshift.io/v1"
-                blockOwnerDeletion: finalizers
-                controller: true
+              # finalizers:
+              #   - kubernetes
+              # ownerReferences:
+              #   - apiVersion: "template.openshift.io/v1"
+                  # blockOwnerDeletion: finalizers
+                  # controller: "true"
               labels:
                 app: ${REPO}-${ZONE}
                 cronjob: ${REPO}-${ZONE}
