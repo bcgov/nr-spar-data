@@ -42,6 +42,8 @@ objects:
     apiVersion: "batch/v1"
     metadata:
       name: ${REPO}-${ZONE}-${APP}
+      finalizers:
+        - kubernetes
       labels:
         app: ${REPO}-${ZONE}
         cronjob: ${REPO}-${ZONE}
