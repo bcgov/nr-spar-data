@@ -60,6 +60,8 @@ objects:
           backoffLimit: ${{JOB_BACKOFF_LIMIT}}
           template:
             metadata:
+              finalizers:
+                - kubernetes
               labels:
                 app: ${REPO}-${ZONE}
                 cronjob: ${REPO}-${ZONE}
