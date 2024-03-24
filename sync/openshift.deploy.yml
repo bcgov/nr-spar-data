@@ -44,6 +44,10 @@ objects:
       name: ${REPO}-${ZONE}-${APP}
       finalizers:
         - kubernetes
+      ownerReferences:
+      - apiVersion: "template.openshift.io/v1"
+        blockOwnerDeletion: finalizers
+        controller: true
       labels:
         app: ${REPO}-${ZONE}
         cronjob: ${REPO}-${ZONE}
@@ -64,6 +68,10 @@ objects:
             metadata:
               finalizers:
                 - kubernetes
+              ownerReferences:
+              - apiVersion: "template.openshift.io/v1"
+                blockOwnerDeletion: finalizers
+                controller: true
               labels:
                 app: ${REPO}-${ZONE}
                 cronjob: ${REPO}-${ZONE}
