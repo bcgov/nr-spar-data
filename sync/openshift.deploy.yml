@@ -42,12 +42,6 @@ objects:
     apiVersion: "batch/v1"
     metadata:
       name: ${REPO}-${ZONE}-${APP}
-      # finalizers:
-      #   - kubernetes
-      # ownerReferences:
-      #   - apiVersion: "template.openshift.io/v1"
-      #     blockOwnerDeletion: finalizers
-          # controller: "true"
       labels:
         app: ${REPO}-${ZONE}
         cronjob: ${REPO}-${ZONE}
@@ -66,12 +60,6 @@ objects:
           backoffLimit: ${{JOB_BACKOFF_LIMIT}}
           template:
             metadata:
-              # finalizers:
-              #   - kubernetes
-              # ownerReferences:
-              #   - apiVersion: "template.openshift.io/v1"
-                  # blockOwnerDeletion: finalizers
-                  # controller: "true"
               labels:
                 app: ${REPO}-${ZONE}
                 cronjob: ${REPO}-${ZONE}
@@ -79,9 +67,9 @@ objects:
               containers:
                 - name: ${REPO}-${ZONE}
                   image: "${REGISTRY}/${ORG}/${REPO}/${APP}:${TAG}"
-                  # env:
-                  #   - name: POSTGRES_SERVICE
-                  #     value: "${REPO}-${ZONE}-database"
+                  env:
+                    - name: POSTGRES_SERVICE
+                      value: "${REPO}-${ZONE}-database"
                   resources:
                     limits:
                       cpu: 250m
