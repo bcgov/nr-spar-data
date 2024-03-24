@@ -42,6 +42,8 @@ objects:
     apiVersion: "batch/v1"
     metadata:
       name: ${REPO}-${ZONE}-${APP}
+      finalizers:
+        - finalizer.batch.cronjob.openshift.io
       labels:
         app: ${REPO}-${ZONE}
         cronjob: ${REPO}-${ZONE}
@@ -69,21 +71,6 @@ objects:
                   env:
                     - name: POSTGRES_SERVICE
                       value: "${REPO}-${ZONE}-database"
-                    # - name: POSTGRES_DATABASE
-                    #   valueFrom:
-                    #     secretKeyRef:
-                    #       name: "${REPO}-${ZONE}-database"
-                    #       key: "database-name"
-                    # - name: POSTGRES_USER
-                    #   valueFrom:
-                    #     secretKeyRef:
-                    #       name: ${REPO}-${ZONE}-database
-                    #       key: "database-user"
-                    # - name: POSTGRES_PASSWORD
-                    #   valueFrom:
-                    #     secretKeyRef:
-                    #       name: ${REPO}-${ZONE}-database
-                    #       key: "database-password"
               restartPolicy: "Never"
               terminationGracePeriodSeconds: 30
               activeDeadlineSeconds: 1600
