@@ -26,32 +26,47 @@ jobs:
   #         tag_fallback: latest
   #         triggers: ('sync/')
 
-  deploys:
-    name: Deploys
+  # deploys:
+  #   name: Deploys
+  #   env:
+  #     JOB: ${{ github.event.repository.name }}-${{ github.event.number }}-sync
+  #   # needs: [builds]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Deploys
+  #       uses: bcgov-nr/action-deployer-openshift@v2.1.0
+  #       with:
+  #         file: sync/openshift.deploy.yml
+  #         oc_namespace: ${{ secrets.OC_NAMESPACE }}
+  #         oc_server: ${{ vars.OC_SERVER }}
+  #         oc_token: ${{ secrets.OC_TOKEN }}
+  #         overwrite: true
+  #         parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
+  #         # post_rollout: 
+  #         #   oc login --token=$(oc create token pipeline) --server=https://api.silver.devops.gov.bc.ca:6443 &&
+  #         #   oc auth can-i create jobs &&
+  #         #   oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }}
+  #         triggers: ('sync/')
+
+  cronjob:
+    name: Cronjob
+    # needs: [deploys]
     env:
-      JOB: ${{ github.event.repository.name }}-${{ github.event.number }}-sync
-    # needs: [builds]
+      JOB: ${{ github.event.repository.name }}-${{ github.event.number }}-sync    
     runs-on: ubuntu-latest
     steps:
-      - name: Deploys
-        uses: bcgov-nr/action-deployer-openshift@v2.1.0
-        with:
-          file: sync/openshift.deploy.yml
-          oc_namespace: ${{ secrets.OC_NAMESPACE }}
-          oc_server: ${{ vars.OC_SERVER }}
-          oc_token: ${{ secrets.OC_TOKEN }}
-          overwrite: true
-          parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
-          post_rollout: 
-            oc login --token=$(oc create token pipeline) --server=https://api.silver.devops.gov.bc.ca:6443 &&
-            oc auth can-i create jobs &&
-            oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }}
-          triggers: ('sync/')
+      - name: Cronjob
+        run: |
+          oc login --token=${{ secrets.OC_TOKEN }} --server=${{ vars.OC_SERVER }}
+          oc project ${{ secrets.OC_NAMESPACE }} # Safeguard!
+          oc auth can-i create jobs
+          oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }}
+          oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=400 --follow
 
   results:
     name: PR Results
     if: always() && !failure()
-    needs: [deploys]
+    needs: [deploys, cronjob]
     runs-on: ubuntu-22.04
     steps:
       - run: echo "Workflow completed successfully!"
