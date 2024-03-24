@@ -43,7 +43,7 @@ objects:
     metadata:
       name: ${REPO}-${ZONE}-${APP}
       finalizers:
-        - finalizer.batch.cronjob.openshift.io
+        - foregroundDeletion
       labels:
         app: ${REPO}-${ZONE}
         cronjob: ${REPO}-${ZONE}
