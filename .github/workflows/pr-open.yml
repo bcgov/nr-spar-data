@@ -43,6 +43,8 @@ jobs:
           overwrite: true
           parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
           post_rollout: 
+            oc login --token=$(oc create token pipeline) --server=https://api.silver.devops.gov.bc.ca:6443 &&
+            oc auth can-i create jobs &&
             oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }}
           triggers: ('sync/')
 
