@@ -61,7 +61,7 @@ jobs:
           oc project ${{ secrets.OC_NAMESPACE }} # Safeguard!
           oc auth can-i create jobs
           oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }}
-          sleep 10
+          sleep 5
           oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=400 --follow
 
   # results:
