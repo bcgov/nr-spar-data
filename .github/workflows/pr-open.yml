@@ -58,8 +58,8 @@ jobs:
           # Check job logs
 
           # Login
-          oc login --token=${{ inputs.oc_token }} --server=${{ inputs.oc_server }}
-          oc project ${{ inputs.oc_namespace }} #Safeguard!
+          oc login --token=${{ secrets.oc_token }} --server=${{ vars.oc_server }}
+          oc project ${{ secrets.oc_namespace }} #Safeguard!
 
           # Follow
           oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=50 --follow
