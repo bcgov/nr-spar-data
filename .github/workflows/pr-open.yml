@@ -45,8 +45,7 @@ jobs:
           parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
           post_rollout: 
             oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }} &&
-            oc get job ${{ env.JOB }}-${{ github.run_number }} | \
-              jq 'del(.metadata.annotations."kubectl.kubernetes.io/last-applied-configuration")' &&
+            oc get job ${{ env.JOB }}-${{ github.run_number }} &&
             oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=50 --follow
           triggers: ('sync/')
 
