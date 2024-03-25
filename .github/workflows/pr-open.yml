@@ -58,7 +58,7 @@ jobs:
     steps:
       - name: Cronjob
         run: |
-          wget ${{ env.OC }} -O - | tar -xzvf -c oc
+          wget ${{ env.OC }} -O - | tar -xzvf - oc
           ./oc version
           ./oc login --token=${{ secrets.OC_TOKEN }} --server=${{ vars.OC_SERVER }}
           ./oc project ${{ secrets.OC_NAMESPACE }} # Safeguard!
