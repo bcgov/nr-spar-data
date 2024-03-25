@@ -10,66 +10,52 @@ concurrency:
 
 jobs:
   # https://github.com/bcgov-nr/action-builder-ghcr
-  # builds:
-  #   name: Builds
-  #   runs-on: ubuntu-22.04
-  #   permissions:
-  #     packages: write
-  #   timeout-minutes: 10
-  #   steps:
-  #     - uses: bcgov-nr/action-builder-ghcr@v2.0.2
-  #       id: builds
-  #       with:
-  #         keep_versions: 50
-  #         package: sync
-  #         tag: ${{ github.event.number }}
-  #         tag_fallback: latest
-  #         triggers: ('sync/')
+  builds:
+    name: Builds
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: write
+    timeout-minutes: 10
+    steps:
+      - uses: bcgov-nr/action-builder-ghcr@v2.0.2
+        id: builds
+        with:
+          keep_versions: 50
+          package: sync
+          tag: ${{ github.event.number }}
+          tag_fallback: latest
+          triggers: ('sync/')
 
-  # deploys:
-  #   name: Deploys
-  #   env:
-  #     JOB: ${{ github.event.repository.name }}-${{ github.event.number }}-sync
-  #   # needs: [builds]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Deploys
-  #       uses: bcgov-nr/action-deployer-openshift@v2.1.0
-  #       with:
-  #         file: sync/openshift.deploy.yml
-  #         oc_namespace: ${{ secrets.OC_NAMESPACE }}
-  #         oc_server: ${{ vars.OC_SERVER }}
-  #         oc_token: ${{ secrets.OC_TOKEN }}
-  #         overwrite: true
-  #         parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
-  #         # post_rollout: 
-  #         #   oc login --token=$(oc create token pipeline) --server=https://api.silver.devops.gov.bc.ca:6443 &&
-  #         #   oc auth can-i create jobs &&
-  #         #   oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }}
-  #         triggers: ('sync/')
-
-  cronjob:
-    name: Cronjob
-    # needs: [deploys]
+  deploys:
+    name: Deploys
     env:
-      JOB: ${{ github.event.repository.name }}-${{ github.event.number }}-sync    
+      JOB: ${{ github.event.repository.name }}-${{ github.event.number }}-sync
+    needs: [builds]
     runs-on: ubuntu-latest
     steps:
-      - name: Cronjob
-        run: |
-          curl -LJo client.tar.gz https://downloads-openshift-console.apps.silver.devops.gov.bc.ca/amd64/linux/oc.tar
-          tar -xvf client.tar.gz
-          ./oc version
-          ./oc login --token=${{ secrets.OC_TOKEN }} --server=${{ vars.OC_SERVER }}
-          ./oc project ${{ secrets.OC_NAMESPACE }} # Safeguard!
-          ./oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }}
-          sleep 10
-          ./oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=400 --follow
+      - name: Deploys
+        uses: bcgov-nr/action-deployer-openshift@v2.1.0
+        with:
+          file: sync/openshift.deploy.yml
+          oc_namespace: ${{ secrets.OC_NAMESPACE }}
+          oc_server: ${{ vars.OC_SERVER }}
+          oc_token: ${{ secrets.OC_TOKEN }}
+          overwrite: true
+          parameters: -p ZONE=${{ github.event.number }} -p TAG=${{ github.event.number }}
+          post_rollout: 
+            curl -LJo client.tar.gz https://downloads-openshift-console.apps.silver.devops.gov.bc.ca/amd64/linux/oc.tar
+            tar -xvf client.tar.gz
+            ./oc version
+            ./oc login --token=$(oc create token pipeline) --server=https://api.silver.devops.gov.bc.ca:6443 &&
+            ./oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }}
+            sleep 10
+            ./oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=50 --follow
+          triggers: ('sync/')
 
-  # results:
-  #   name: PR Results
-  #   if: always() && !failure()
-  #   needs: [deploys, cronjob]
-  #   runs-on: ubuntu-22.04
-  #   steps:
-  #     - run: echo "Workflow completed successfully!"
+  results:
+    name: PR Results
+    if: always() && !failure()
+    needs: [deploys]
+    runs-on: ubuntu-22.04
+    steps:
+      - run: echo "Workflow completed successfully!"
