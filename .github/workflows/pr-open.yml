@@ -46,13 +46,28 @@ jobs:
           post_rollout: 
             oc create job ${{ env.JOB }}-${{ github.run_number }} --from=cronjob/${{ env.JOB }} &&
             oc get job ${{ env.JOB }}-${{ github.run_number }} &&
-            oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=50 --follow
           triggers: ('sync/')
+
+  logs:
+    name: Logs
+    needs: [deploys]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Logs
+        run: |
+          # Check job logs
+
+          # Login
+          oc login --token=${{ inputs.oc_token }} --server=${{ inputs.oc_server }}
+          oc project ${{ inputs.oc_namespace }} #Safeguard!
+
+          # Follow
+          oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=50 --follow
 
   results:
     name: PR Results
     if: always() && !failure()
-    needs: [deploys]
+    needs: [logs]
     runs-on: ubuntu-22.04
     steps:
       - run: echo "Workflow completed successfully!"
