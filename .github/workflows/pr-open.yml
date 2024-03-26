@@ -66,6 +66,9 @@ jobs:
           sleep 10
           oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=50 --follow
 
+          # Results
+          oc get job ${{ env.JOB }}-${{ github.run_number }}
+
   results:
     name: PR Results
     if: always() && !failure()
