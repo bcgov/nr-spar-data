@@ -63,7 +63,7 @@ jobs:
           oc project ${{ secrets.oc_namespace }} #Safeguard!
 
           # Follow
-          sleep 5
+          sleep 10
           oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=50 --follow
 
   results:
