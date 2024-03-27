@@ -16,6 +16,8 @@ jobs:
   builds:
     name: Builds
     runs-on: ubuntu-22.04
+    outputs:
+      digest: ${{ steps.builds.outputs.digest }}
     permissions:
       packages: write
     timeout-minutes: 10
