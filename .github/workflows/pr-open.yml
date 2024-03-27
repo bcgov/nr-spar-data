@@ -28,6 +28,7 @@ jobs:
   deploy:
     name: Deploy
     needs: [build]
+    secrets: inherit
     uses: ./.github/workflows/.deploy.yml
     with:
       target: ${{ github.event.number }}
