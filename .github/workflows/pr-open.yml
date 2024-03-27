@@ -68,8 +68,9 @@ jobs:
           sleep 10
           oc logs -l job-name=${{ env.JOB }}-${{ github.run_number }} --tail=50 --follow
 
-          # Results
+          # Results and exit code
           oc get job ${{ env.JOB }}-${{ github.run_number }}
+          exit ! $(oc get job ${{ env.JOB }}-${{ github.run_number }} -o jsonpath='{.status.conditions[?(@.type=="Failed")].status}')
 
   results:
     name: PR Results
