@@ -56,6 +56,16 @@ jobs:
     # needs: [deploys]
     runs-on: ubuntu-latest
     steps:
+    - name: Override OpenShift version
+      env:
+        OC: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable-4.13/openshift-client-linux.tar.gz
+      shell: bash
+      working-directory: /usr/local/bin/
+      run: |
+        # Override OpenShift version
+        curl --silent ${{ env.OC }} | tar -xzvf - oc
+        oc version
+
       - name: Logs
         run: |
           # Check job logs
