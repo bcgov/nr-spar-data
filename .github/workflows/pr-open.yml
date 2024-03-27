@@ -83,13 +83,15 @@ jobs:
 
           READY=$(oc get job ${{ env.CRONJOB }}-${{ github.run_number }} -o jsonpath='{.status.ready}')
           echo "READY: $READY"
-          # if [ $(oc get job ${{ env.CRONJOB }}-${{ github.run_number }} -o jsonpath='{.status.ready}') -eq 0 ]; then
-          #   echo "Job failed!"
-          #   exit 1
-          # else
-          #   echo "Job successful!"
-          #   exit 0
-          # fi
+
+          if [ $(oc get job ${{ env.CRONJOB }}-${{ github.run_number }} -o jsonpath='{.status.ready}') -eq 0 ]; then
+          if [ "${READY}" -eq 0 ]; then
+            echo "Job failed!"
+            exit 1
+          else
+            echo "Job successful!"
+            exit 0
+          fi
 
   results:
     name: PR Results
