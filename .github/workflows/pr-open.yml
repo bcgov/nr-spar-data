@@ -70,7 +70,14 @@ jobs:
 
           # Results and exit code
           oc get job ${{ env.JOB }}-${{ github.run_number }}
-          exit ! $(oc get job ${{ env.JOB }}-${{ github.run_number }} -o jsonpath='{.status.ready}')
+
+          if [ $(oc get job ${{ env.JOB }}-${{ github.run_number }} -o jsonpath='{.status.ready}') -eq 0 ]; then
+            echo "Job failed!"
+            exit 1
+          else
+            echo "Job successful!"
+            exit 0
+          fi
 
   results:
     name: PR Results
