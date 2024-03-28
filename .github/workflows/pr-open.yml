@@ -27,12 +27,12 @@ jobs:
 
   deploy:
     name: Deploy
+    if: needs.build.outputs.digest != ''
     needs: [build]
     secrets: inherit
     uses: ./.github/workflows/.deploy.yml
     with:
       target: ${{ github.event.number }}
-      triggers: ('sync/')
 
   results:
     name: PR Results
