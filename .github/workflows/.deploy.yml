@@ -10,6 +10,11 @@ on:
         type: string
 
       ### Typical / recommended
+      environment:
+        description: GitHub environment to use; optional
+        required: false
+        type: string
+
       triggers:
         description: Bash array to diff for build triggering; omit to always fire
         required: false
@@ -27,6 +32,7 @@ env:
 jobs:
   deploy:
     name: Deploy
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
       - name: Deploy
@@ -47,6 +53,7 @@ jobs:
   verify:
     name: Verify
     if: inputs.verify == 'true'
+    environment: ${{ inputs.environment }}
     needs: [deploy]
     runs-on: ubuntu-latest
     steps:
