@@ -9,35 +9,56 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # https://github.com/bcgov-nr/action-builder-ghcr
-  build:
-    name: Build
+  # # https://github.com/bcgov-nr/action-builder-ghcr
+  # build:
+  #   name: Build
+  #   runs-on: ubuntu-22.04
+  #   permissions:
+  #     packages: write
+  #   timeout-minutes: 10
+  #   steps:
+  #     - uses: bcgov-nr/action-builder-ghcr@v2.0.2
+  #       with:
+  #         keep_versions: 50
+  #         package: sync
+  #         tag: ${{ github.event.number }}
+  #         tag_fallback: latest
+  #         triggers: ('sync/')
+
+  # deploy:
+  #   name: Deploy
+  #   if: needs.build.outputs.digest != ''
+  #   needs: [build]
+  #   secrets: inherit
+  #   uses: ./.github/workflows/.deploy.yml
+  #   with:
+  #     target: ${{ github.event.number }}
+
+  # results:
+  #   name: PR Results
+  #   if: always() && !failure()
+  #   needs: [deploy]
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - run: echo "Workflow completed successfully!"
+
+  vars:
+    name: Set Variables
+    outputs:
+      pr: ${{ steps.pr.outputs.pr }}
     runs-on: ubuntu-22.04
-    permissions:
-      packages: write
-    timeout-minutes: 10
+    timeout-minutes: 1
     steps:
-      - uses: bcgov-nr/action-builder-ghcr@v2.0.2
-        with:
-          keep_versions: 50
-          package: sync
-          tag: ${{ github.event.number }}
-          tag_fallback: latest
-          triggers: ('sync/')
+      # Get PR number for squash merges to main
+      - name: PR Number
+        id: pr
+        uses: bcgov-nr/action-get-pr@v0.0.1
 
   deploy:
     name: Deploy
-    if: needs.build.outputs.digest != ''
-    needs: [build]
+    needs: [vars]
     secrets: inherit
     uses: ./.github/workflows/.deploy.yml
     with:
-      target: ${{ github.event.number }}
-
-  results:
-    name: PR Results
-    if: always() && !failure()
-    needs: [deploy]
-    runs-on: ubuntu-22.04
-    steps:
-      - run: echo "Workflow completed successfully!"
+      target: ${{ needs.vars.outputs.pr }}
+      verify: false
