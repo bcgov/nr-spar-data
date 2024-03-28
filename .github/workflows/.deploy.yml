@@ -14,6 +14,11 @@ on:
         description: Bash array to diff for build triggering; omit to always fire
         required: false
         type: string
+      
+      verify:
+        description: Run the cronjob and verify results?  [true|false]
+        required: false
+        default: true
 
 env:
   CRONJOB: ${{ github.event.repository.name }}-${{ inputs.target }}-sync
@@ -41,6 +46,7 @@ jobs:
 
   verify:
     name: Verify
+    if: inputs.verify == 'true'
     needs: [deploy]
     runs-on: ubuntu-latest
     steps:
