@@ -33,9 +33,12 @@ jobs:
         id: pr
         uses: bcgov-nr/action-get-pr@v0.0.1
 
-  results:
-    name: PR Results
+  deploy:
+    name: Deploy
     needs: [vars]
-    runs-on: ubuntu-22.04
-    steps:
-      - run: echo "Workflow completed successfully!"
+    secrets: inherit
+    uses: ./.github/workflows/.deploy.yml
+    with:
+      environment: test
+      target: ${{ needs.vars.outputs.pr }}
+      verify: false
