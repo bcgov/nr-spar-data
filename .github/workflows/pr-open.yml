@@ -74,7 +74,7 @@ jobs:
           oc project ${{ secrets.oc_namespace }} #Safeguard!
 
           # Follow
-          oc create job ${{ env.CRONJOB }}-${{ github.run_number }} --from=cronjob/${{ env.CRONJOB }}
+          oc create job ${{ env.CRONJOB }}-${{ github.run_number }}-logtest --from=cronjob/${{ env.CRONJOB }}
           sleep 15
           oc logs -l job-name=${{ env.CRONJOB }}-${{ github.run_number }} --tail=50 --follow
 
