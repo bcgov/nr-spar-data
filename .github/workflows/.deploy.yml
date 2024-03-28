@@ -23,6 +23,7 @@ on:
       verify:
         description: Run the cronjob and verify results?  [true|false]
         required: false
+        type: boolean
         default: true
 
 env:
