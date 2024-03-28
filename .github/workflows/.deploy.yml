@@ -47,7 +47,7 @@ jobs:
           overwrite: true
           parameters: -p ZONE=${{ inputs.target }} -p TAG=${{ inputs.target }}
           post_rollout: 
-            oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }}
+            oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }} && \
             oc wait --for=condition=complete job/${{ env.JOB_JOB }} --timeout=10m
           triggers: ${{ inputs.triggers }}
 
