@@ -62,9 +62,9 @@ objects:
   - apiVersion: v1
     kind: Secret
     metadata:
-      name: ${APP}-${ZONE}-${APP}
+      name: ${REPO}-${ZONE}-${APP}
       labels:
-        app: ${APP}-${ZONE}
+        app: ${REPO}-${ZONE}
     stringData:
       database-name: ${APP}
       database-password: ${DB_PASSWORD}
@@ -72,9 +72,9 @@ objects:
   - apiVersion: v1
     kind: Secret
     metadata:
-      name: ${APP}-${ZONE}-oracle-api
+      name: ${REPO}-${ZONE}-oracle-api
       labels:
-        app: ${APP}-${ZONE}
+        app: ${REPO}-${ZONE}
     stringData:
       oracle-user: ${ORACLE_USER}
       oracle-password: ${ORACLE_PASSWORD}
