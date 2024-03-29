@@ -25,14 +25,16 @@ jobs:
   #         tag_fallback: latest
   #         triggers: ('sync/')
 
-  # deploy:
-  #   name: Deploy
+  deploy:
+    name: Deploy
+    needs: [vars]
   #   if: needs.build.outputs.digest != ''
   #   needs: [build]
-  #   secrets: inherit
-  #   uses: ./.github/workflows/.deploy.yml
-  #   with:
-  #     target: ${{ github.event.number }}
+    secrets: inherit
+    uses: ./.github/workflows/.deploy.yml
+    with:
+      environment: test
+      target: ${{ github.event.number }}
 
   # results:
   #   name: PR Results
@@ -41,24 +43,3 @@ jobs:
   #   runs-on: ubuntu-22.04
   #   steps:
   #     - run: echo "Workflow completed successfully!"
-
-  vars:
-    name: Set Variables
-    outputs:
-      pr: ${{ steps.pr.outputs.pr }}
-    runs-on: ubuntu-22.04
-    timeout-minutes: 1
-    steps:
-      # Get PR number for squash merges to main
-      - name: PR Number
-        id: pr
-        uses: bcgov-nr/action-get-pr@v0.0.1
-
-  deploy:
-    name: Deploy
-    needs: [vars]
-    secrets: inherit
-    uses: ./.github/workflows/.deploy.yml
-    with:
-      environment: "test"
-      target: ${{ needs.vars.outputs.pr }}

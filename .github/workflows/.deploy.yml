@@ -11,7 +11,7 @@ on:
 
       ### Typical / recommended
       environment:
-        description: GitHub environment to use; optional
+        description: GitHub environment; omit for PRs
         required: false
         type: string
 
@@ -33,10 +33,10 @@ env:
 jobs:
   deploy:
     name: Deploy
+    environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
       - name: Deploy
-        environment: ${{ inputs.environment }}
         uses: bcgov-nr/action-deployer-openshift@v2.2.0
         with:
           file: sync/openshift.etl.yml
