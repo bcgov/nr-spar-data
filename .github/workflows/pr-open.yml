@@ -33,7 +33,7 @@ jobs:
 
   deploy:
     name: Deploy
-    if: needs.build.outputs.digest != ''
+    # if: needs.build.outputs.digest != ''
     # needs: [build]
     secrets: inherit
     uses: ./.github/workflows/.deploy.yml
