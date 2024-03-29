@@ -45,11 +45,18 @@ jobs:
     name: Deploy
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [backend, sync]
+        include:
+          - package: database
+          - package: sync
+            parameters: -p TEST_MODE=1
     steps:
       - name: Deploy
         uses: bcgov-nr/action-deployer-openshift@v2.2.0
         with:
-          file: sync/openshift.etl.yml
+          file: ${{ matrix.package }}/openshift.deploy.yml
           oc_namespace: ${{ secrets.OC_NAMESPACE }}
           oc_server: ${{ vars.OC_SERVER }}
           oc_token: ${{ secrets.OC_TOKEN }}
