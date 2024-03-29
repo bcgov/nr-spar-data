@@ -61,4 +61,4 @@ jobs:
     uses: ./.github/workflows/.deploy.yml
     with:
       target: ${{ needs.vars.outputs.pr }}
-      verify: false
+      verify: true
