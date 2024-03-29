@@ -7,8 +7,6 @@ x-var:
     default
   - &POSTGRES_DATABASE
     postgres
-  - &VTOKEN
-    {$vtoken}
 
 x-postgres-vars: &postgres-vars
   POSTGRES_HOST: database
@@ -25,7 +23,7 @@ x-python-vars: &python-vars
   teste: "123"
   test_mode: 1
   vurl: "https://knox.io.nrs.gov.bc.ca/v1/groups/data/spar/test"
-  vtoken: &VTOKEN
+  vtoken: ${vtoken}
 
 services:
   database:
