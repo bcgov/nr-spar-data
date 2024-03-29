@@ -56,7 +56,7 @@ jobs:
           overwrite: false
           parameters:
             -p ZONE=${{ inputs.target }} -p TAG=${{ inputs.tag }}
-            -p ORACLE_PASSWORD="oracle_password"
+            -p ORACLE_PASSWORD="${{ secrets.ORACLE_PASSWORD }}"
           triggers: ('database/' 'sync/')
 
       - name: Sync
