@@ -21,12 +21,11 @@ jobs:
         with:
           keep_versions: 50
           package: sync
-          tag: ${{ github.event.number }}
           tag_fallback: latest
           triggers: ('sync/')
 
   deploy:
-    name: Deploy
+    name: Deploy and Run Job
     if: needs.build.outputs.digest != ''
     needs: [build]
     secrets: inherit
