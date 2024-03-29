@@ -29,12 +29,10 @@ parameters:
     generate: expression
   - name: ORACLE_DB_USER
     description: Oracle database username for API
-    required: false
-    value: oracle_db_user
+    required: true
   - name: ORACLE_DB_PASSWORD
     description: Oracle database password for API
-    required: false
-    value: oracle_db_password
+    required: true
 
   ### Usually a bad idea - not recommended
   - name: REGISTRY
