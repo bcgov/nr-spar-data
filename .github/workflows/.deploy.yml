@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [backend, sync]
+        package: [database, sync]
         include:
           - package: database
           - package: sync
