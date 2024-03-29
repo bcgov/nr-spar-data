@@ -46,9 +46,7 @@ jobs:
           oc_version: 4.13
           overwrite: true
           parameters: -p ZONE=${{ inputs.target }} -p TAG=${{ inputs.target }}
-          post_rollout: 
-            oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }} && \
-            oc wait --for=condition=complete job/${{ env.JOB_JOB }} --timeout=10m
+          post_rollout: oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }}
           triggers: ${{ inputs.triggers }}
 
   verify:
@@ -67,7 +65,7 @@ jobs:
           oc project ${{ secrets.oc_namespace }} #Safeguard!
 
           # Follow
-          sleep 5
+          oc wait --for=condition=complete job/${{ env.JOB_JOB }} --timeout=10m
           oc logs -l job-name=${{ env.JOB_JOB }} --tail=50 --follow
 
           # Results and exit code
