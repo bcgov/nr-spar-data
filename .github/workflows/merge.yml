@@ -39,6 +39,5 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/.deploy.yml
     with:
-      environment: test
       target: ${{ needs.vars.outputs.pr }}
       verify: false
