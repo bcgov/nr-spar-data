@@ -10,10 +10,10 @@ on:
       - '!.github/workflows/**'
   workflow_dispatch:
     inputs:
-      pr_no:
-        description: "PR-numbered container set to deploy"
-        type: number
-        required: true
+      tag:
+        description: "Optional package tag; e.g. PR-number or prod"
+        type: string
+        required: false
 
 concurrency:
   # Do not interrupt previous workflows
@@ -21,12 +21,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  vars:
+    name: Set Variables
+    outputs:
+      pr: ${{ steps.pr.outputs.pr }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 1
+    steps:
+      # Get PR number for squash merges to main
+      - name: PR Number
+        if: inputs.tag == null
+        id: pr
+        uses: bcgov-nr/action-get-pr@v0.0.1
+
   deploy:
     name: Deploy and Run Job
+    needs: [vars]
     secrets: inherit
     uses: ./.github/workflows/.deploy.yml
     with:
       environment: test
+      tag: ${{ inputs.tag || needs.vars.outputs.pr }}
       target: test
       verify: false
 
@@ -42,5 +57,5 @@ jobs:
         with:
           registry: ghcr.io
           repository: ${{ github.repository }}/sync
-          target: ${{ needs.vars.outputs.pr }}
+          target: ${{ inputs.tag || needs.vars.outputs.pr }}
           tags: prod
