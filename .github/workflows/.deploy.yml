@@ -15,6 +15,11 @@ on:
         required: false
         type: string
 
+      parameters:
+        description: Template parameters/variables to pass (e.g. -p ZONE=...)
+        required: false
+        type: string
+
       tag:
         description: GitHub package tag; omit for PRs
         required: false
@@ -73,7 +78,9 @@ jobs:
           oc_token: ${{ secrets.OC_TOKEN }}
           oc_version: 4.13
           overwrite: true
-          parameters: -p ZONE=${{ inputs.target }} -p TAG=${{ needs.vars.outputs.tag }}
+          parameters:
+            -p ZONE=${{ inputs.target }} -p TAG=${{ needs.vars.outputs.tag }} \
+            ${{ inputs.parameters}}
           post_rollout: oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }}
           triggers: ${{ inputs.triggers }}
 

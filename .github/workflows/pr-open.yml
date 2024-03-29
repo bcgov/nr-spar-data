@@ -32,6 +32,8 @@ jobs:
     secrets: inherit
     uses: ./.github/workflows/.deploy.yml
     with:
+      parameters:
+        -p TEST_MODE=1
       target: ${{ github.event.number }}
 
   results:
