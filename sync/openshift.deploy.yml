@@ -74,31 +74,31 @@ objects:
                     - name: test_mode
                       value: "${TEST_MODE}"
                     - name: DB_SERVICE
-                      value: ${NAME}-${ZONE}-database
+                      value: ${APP}-${ZONE}-database
                     - name: DB_NAME
                       valueFrom:
                         secretKeyRef:
-                          name: ${NAME}-${ZONE}-database
+                          name: ${APP}-${ZONE}-database
                           key: database-name
                     - name: DB_PASSWORD
                       valueFrom:
                         secretKeyRef:
-                          name: ${NAME}-${ZONE}-database
+                          name: ${APP}-${ZONE}-database
                           key: database-password
                     - name: DB_USER
                       valueFrom:
                         secretKeyRef:
-                          name: ${NAME}-${ZONE}-database
+                          name: ${APP}-${ZONE}-database
                           key: database-user
                     - name: ORACLE_USER
                       valueFrom:
                         secretKeyRef:
-                          name: ${NAME}-${ZONE}-oracle-api
+                          name: ${APP}-${ZONE}-oracle-api
                           key: oracle-user
                     - name: ORACLE_PASSWORD
                       valueFrom:
                         secretKeyRef:
-                          name: ${NAME}-${ZONE}-oracle-api
+                          name: ${APP}-${ZONE}-oracle-api
                           key: oracle-password
                   resources:
                     limits:
