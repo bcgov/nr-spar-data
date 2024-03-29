@@ -27,7 +27,6 @@ jobs:
 
   deploy:
     name: Deploy
-    needs: [vars]
   #   if: needs.build.outputs.digest != ''
   #   needs: [build]
     secrets: inherit
