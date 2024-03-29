@@ -51,7 +51,7 @@ jobs:
 
   verify:
     name: Verify
-    if: inputs.verify == 'true'
+    if: inputs.verify == true
     environment: ${{ inputs.environment }}
     needs: [deploy]
     runs-on: ubuntu-latest
