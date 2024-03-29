@@ -90,12 +90,12 @@ objects:
                         secretKeyRef:
                           name: ${NAME}-${ZONE}-database
                           key: database-user
-                    - name: ORACLE_DB_USER
+                    - name: ORACLE_USER
                       valueFrom:
                         secretKeyRef:
                           name: ${NAME}-${ZONE}-oracle-api
                           key: oracle-user
-                    - name: ORACLE_DB_PASSWORD
+                    - name: ORACLE_PASSWORD
                       valueFrom:
                         secretKeyRef:
                           name: ${NAME}-${ZONE}-oracle-api
