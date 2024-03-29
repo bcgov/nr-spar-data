@@ -42,7 +42,7 @@ env:
 
 jobs:
   deploy:
-    name: Deploy and Run Job
+    name: Deploy
     environment: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     steps:
