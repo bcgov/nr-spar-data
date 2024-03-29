@@ -51,7 +51,7 @@ jobs:
         include:
           - package: database
           - package: sync
-            parameters: -p TEST_MODE=1
+            parameters: ${{ inputs.parameters}}
     steps:
       - name: Deploy
         uses: bcgov-nr/action-deployer-openshift@v2.2.0
@@ -64,7 +64,6 @@ jobs:
           overwrite: true
           parameters:
             -p ZONE=${{ inputs.target }} -p TAG=${{ inputs.tag }}
-            ${{ inputs.parameters}}
           post_rollout: oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }}
           triggers: ${{ inputs.triggers }}
 

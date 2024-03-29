@@ -9,32 +9,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # https://github.com/bcgov-nr/action-builder-ghcr
-  build:
-    name: Build
-    runs-on: ubuntu-22.04
-    outputs:
-      digest: ${{ steps.build.outputs.digest }}
-    permissions:
-      packages: write
-    strategy:
-      matrix:
-        package: [database, sync]
-    timeout-minutes: 10
-    steps:
-      - uses: bcgov-nr/action-builder-ghcr@v2.0.2
-        id: build
-        with:
-          keep_versions: 50
-          package: ${{ matrix.package }}
-          tag: ${{ github.event.number }}
-          tag_fallback: latest
-          triggers: ('${{ matrix.package }}/')
+  # # https://github.com/bcgov-nr/action-builder-ghcr
+  # build:
+  #   name: Build
+  #   runs-on: ubuntu-22.04
+  #   outputs:
+  #     digest: ${{ steps.build.outputs.digest }}
+  #   permissions:
+  #     packages: write
+  #   strategy:
+  #     matrix:
+  #       package: [database, sync]
+  #   timeout-minutes: 10
+  #   steps:
+  #     - uses: bcgov-nr/action-builder-ghcr@v2.0.2
+  #       id: build
+  #       with:
+  #         keep_versions: 50
+  #         package: ${{ matrix.package }}
+  #         tag: ${{ github.event.number }}
+  #         tag_fallback: latest
+  #         triggers: ('${{ matrix.package }}/')
 
   deploy:
     name: Deploy
     if: needs.build.outputs.digest != ''
-    needs: [build]
+    # needs: [build]
     secrets: inherit
     uses: ./.github/workflows/.deploy.yml
     with:
