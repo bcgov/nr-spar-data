@@ -14,7 +14,7 @@ on:
         description: GitHub environment; omit for PRs
         required: false
         type: string
-      
+
       tag:
         description: GitHub package tag; omit for PRs
         required: false
