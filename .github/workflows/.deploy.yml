@@ -63,6 +63,9 @@ jobs:
             echo "tag=${{ inputs.tag }}" >> $GITHUB_ENV
           fi
 
+          echo "tag=${{ steps.pr.outputs.pr }}"
+          echo "tag=${{ inputs.tag }}"
+
   deploy:
     name: Deploy and Run Job
     needs: [vars]
@@ -79,7 +82,7 @@ jobs:
           oc_version: 4.13
           overwrite: true
           parameters:
-            -p ZONE=${{ inputs.target }} -p TAG=${{ needs.vars.outputs.tag }} \
+            -p ZONE=${{ inputs.target }} -p TAG=${{ needs.vars.outputs.tag }}
             ${{ inputs.parameters}}
           post_rollout: oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }}
           triggers: ${{ inputs.triggers }}
