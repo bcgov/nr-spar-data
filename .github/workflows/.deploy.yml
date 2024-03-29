@@ -65,14 +65,13 @@ jobs:
           oc project ${{ secrets.oc_namespace }} #Safeguard!
 
           # Follow
-          oc wait --for=jsonpath='{.status.failed}'=4 job/${{ env.JOB_JOB }} --timeout=1m
+          oc wait --for=jsonpath='{.status.failed}'=4 job/${{ env.JOB_JOB }} --timeout=1m || true
           oc logs -l job-name=${{ env.JOB_JOB }} --tail=50 --follow
 
           # Results and exit code
           oc get job ${{ env.JOB_JOB }}
 
           if [ $(oc get job ${{ env.JOB_JOB }} -o jsonpath='{.status.ready}') -eq 0 ]; then
-          if [ "${READY}" -eq 0 ]; then
             echo "Job failed!"
             exit 1
           else
