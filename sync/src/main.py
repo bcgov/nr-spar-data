@@ -76,6 +76,7 @@ if __name__ == '__main__':
             required_variables_exists()
             # Vault disabled
             # testVault()
-        else:
-            main()
+        else:            
+            print("Starting main process ...")
+            # main()
 
