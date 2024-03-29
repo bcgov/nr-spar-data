@@ -22,6 +22,20 @@ parameters:
     description: Repository name
     value: nr-spar-data
 
+  ### Config
+  - name: DB_PASSWORD
+    description: Password for the PostgreSQL connection user.
+    from: "[a-zA-Z0-9]{16}"
+    generate: expression
+  - name: ORACLE_DB_USER
+    description: Oracle database username for API
+    required: false
+    value: oracle_db_user
+  - name: ORACLE_DB_PASSWORD
+    description: Oracle database password for API
+    required: false
+    value: oracle_db_password
+
   ### Usually a bad idea - not recommended
   - name: REGISTRY
     description: Container registry to import from (internal is image-registry.openshift-image-registry.svc:5000)
@@ -47,6 +61,25 @@ parameters:
   - name: MAX_REPLICAS
     description: Dummy value for workflow convenience
 objects:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: ${NAME}-${ZONE}-${APP}
+      labels:
+        app: ${NAME}-${ZONE}
+    stringData:
+      database-name: ${NAME}
+      database-password: ${DB_PASSWORD}
+      database-user: ${NAME}
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: ${NAME}-${ZONE}-oracle-api
+      labels:
+        app: ${NAME}-${ZONE}
+    stringData:
+      oracle-user: ${ORACLE_DB_USER}
+      oracle-password: ${ORACLE_DB_PASSWORD}
   - kind: PersistentVolumeClaim
     apiVersion: v1
     metadata:
