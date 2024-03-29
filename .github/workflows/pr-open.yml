@@ -21,6 +21,7 @@ jobs:
         with:
           keep_versions: 50
           package: sync
+          tag: ${{ github.event.number }}
           tag_fallback: latest
           triggers: ('sync/')
 
