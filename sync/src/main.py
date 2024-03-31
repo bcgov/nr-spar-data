@@ -10,6 +10,29 @@ def env_var_is_filled(variable):
         print("Error: "+variable+" environment variable is None")
         return False
     return True
+    
+def db_config_test(type_,schema_):
+    if type_ == "ORACLE":
+        return dbConfigOrcl = {
+            "type": "ORACLE",
+            "username": os.environ.get("ORACLE_USER"),
+            "password": os.environ.get("ORACLE_PASSWORD"),
+            "host": os.environ.get("ORACLE_HOST"),
+            "port": os.environ.get("ORACLE_PORT"),
+            "service_name": os.environ.get("ORACLE_SN"),
+            "schema": schema_,
+            "test_query": "SELECT 1 a FROM DUAL"
+        }
+    if type_ == "POSTGRES":
+        return dbConfigOrcl = {
+            "type": "POSTGRES",
+            "username": user_,
+            "password": pass_,
+            "host": host_,
+            "port": port_,
+            "schema": schema_,
+            "test_query": "SELECT 1 a"
+        }
 
 def required_variables_exists():
     ret = True
@@ -24,6 +47,8 @@ def required_variables_exists():
        not env_var_is_filled("POSTGRES_USER") or \
        not env_var_is_filled("POSTGRES_PASSWORD") or \
        not env_var_is_filled("POSTGRES_DATABASE") or \
+       not env_var_is_filled("ORACLE_HOST") or \
+       not env_var_is_filled("ORACLE_SN") or \
        not env_var_is_filled("ORACLE_USER") or \
        not env_var_is_filled("ORACLE_PASSWORD"):
        ret = False        
@@ -33,9 +58,31 @@ def required_variables_exists():
     else:
         raise Exception("Not all required variables to execute a instance of Data Sync Engine exists.")
     
+def testOracleConnection():
+    print("-- 3. Checking if Oracle connection is available and reachable")
+    dbConfig = db_config_test("ORACLE","THE") 
+    response = os.system("ping -c 1 " + dbConfig["host"] )
+    if response == 0:
+        print("ORACLE Host ("+dbConfig["host"]+") is reachable")
+    else:
+        print("ORACLE Host ("+dbConfig["host"]+") is unreachable")
+        
+    d = test_db_connection.do_test(dbConfig)
+    print(d)
+    
 def testPostgresConnection():
     print("-- 2. Checking if Postgres connection is available and reachable")
+    from module.test_db_connection import test_db_connection
+    dbConfig = db_config_test("POSTGRES","spar")
     
+    response = os.system("ping -c 1 " + dbConfig["host"] )
+    if response == 0:
+        print("POSTGRES Host ("+dbConfig["host"]+") is reachable")
+    else:
+        print("POSTGRES Host ("+dbConfig["host"]+") is unreachable")
+        
+    d = test_db_connection.do_test(dbConfig)
+    print(d)
         
 # -- Vault is deprecated
 def testVault():  
