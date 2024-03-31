@@ -12,8 +12,9 @@ def env_var_is_filled(variable):
     return True
     
 def db_config_test(type_,schema_):
+    dbconfig = {}
     if type_ == "ORACLE":
-        return dbConfigOrcl = {
+        dbconfig = {
             "type": "ORACLE",
             "username": os.environ.get("ORACLE_USER"),
             "password": os.environ.get("ORACLE_PASSWORD"),
@@ -24,7 +25,7 @@ def db_config_test(type_,schema_):
             "test_query": "SELECT 1 a FROM DUAL"
         }
     if type_ == "POSTGRES":
-        return dbConfigOrcl = {
+        dbconfig = {
             "type": "POSTGRES",
             "username": user_,
             "password": pass_,
@@ -33,6 +34,7 @@ def db_config_test(type_,schema_):
             "schema": schema_,
             "test_query": "SELECT 1 a"
         }
+    return dbConfig
 
 def required_variables_exists():
     ret = True
