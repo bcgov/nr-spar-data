@@ -9,10 +9,6 @@ def required_variables_exists():
     ret = True
     print("Checking if required variables are defined")
     
-    if os.environ.get("teste") is None:
-        print("Error: teste variable is None")
-        ret = False
-        
     if os.environ.get("test_mode") is None:
         print("Error: test mode variable is None")
         ret = False
@@ -26,13 +22,6 @@ def required_variables_exists():
 # -- Vault is deprecated
 def testVault():  
     ret = True
-    
-    teste = os.environ['teste']  # Copying my token from vault
-    if teste =='123':
-        print("Test control variable is ok")
-    else:
-        ret = False
-        print("Test Control variable value is not expected")
         
     vault_url = os.environ['vurl']  # Vault url
     if vault_url.startswith('https://'):
