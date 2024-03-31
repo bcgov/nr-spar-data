@@ -5,18 +5,34 @@ from logging import config as logging_config
 import os
 import sys
 
+def env_var_is_filled(variable):
+    if os.environ.get(variable) is None:
+        print("Error: "+variable+" environment variable is None")
+        return False
+    return True
+
 def required_variables_exists():
     ret = True
-    print("Checking if required variables are defined")
     
-    if os.environ.get("test_mode") is None:
-        print("Error: test mode variable is None")
-        ret = False
+    print("-------------------------------------")
+    print("----- ELT Tool: Unit test Execution  ")
+    print("-- 1. Checking if required variables are defined")
+    print("-------------------------------------")
+    
+    if !env_var_is_filled("test_mode") or 
+       !env_var_is_filled("POSTGRES_HOST") or 
+       !env_var_is_filled("POSTGRES_USER") or 
+       !env_var_is_filled("POSTGRES_PASSWORD") or 
+       !env_var_is_filled("POSTGRES_DATABASE"):
+       ret = False        
         
     if ret:
         print("Required variable test passed!")
     else:
         raise Exception("Not all required variables to execute a instance of Data Sync Engine exists.")
+    
+def testPostgresConnection():
+    print("-- 2. Checking if Postgres connection is available and reachable")
     
         
 # -- Vault is deprecated
@@ -63,6 +79,7 @@ if __name__ == '__main__':
         if this_is_a_test in definitiion_of_yes:
             print("Executing in Test mode")
             required_variables_exists()
+            testPostgresConnection()
             # Vault disabled
             # testVault()
         else:            
