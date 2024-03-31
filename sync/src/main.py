@@ -22,7 +22,7 @@ def db_config_test(type_,schema_):
             "port": os.environ.get("ORACLE_PORT"),
             "service_name": os.environ.get("ORACLE_SN"),
             "schema": schema_,
-            "test_query": "SELECT 1 a FROM DUAL"
+            "test_query": "SELECT 'SUCCESS' a FROM DUAL"
         }
     if type_ == "POSTGRES":
         dbconfig = {
@@ -33,7 +33,7 @@ def db_config_test(type_,schema_):
             "database": os.environ.get("POSTGRES_DATABASE"),
             "port": os.environ.get("POSTGRES_PORT"),
             "schema": schema_,
-            "test_query": "SELECT 1 a"
+            "test_query": "SELECT 'SUCCESS' a"
         }
     return dbconfig
 
