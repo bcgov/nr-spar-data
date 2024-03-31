@@ -23,9 +23,13 @@ class test_db_connection:
             dbc = database_config # alias
             connection_string = test_db_connection.format_connection_string(database_config)
             engine = create_engine(connection_string)
-            conn = engine.connect().execution_options(autocommit=False)
-            result = conn.execute(text(database_config["test_query"]))
-            return result        
+            #conn = engine.connect().execution_options(autocommit=False)
+            conn = engine.raw_connection()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            cursor.execute(text(database_config["test_query"]))
+            result = cursor.fetchall()
+            print(result)
+            return result
     
     def do_test_old(database_config):
         """ Test Connection """
