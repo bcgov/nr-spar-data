@@ -51,9 +51,9 @@ class test_db_connection:
         return ssl_args        
         
     def format_connection_string(database_config: str):
-        import oracledb
         """ Formats the connection string based on the database type and the connection configuration. """
         if database_config['type'] == 'ORACLE':
+            import oracledb
             print("Oracle DB Connection to " + database_config['host'] + ", SN=" + database_config['service_name'])
             cp = oracledb.ConnectParams(
                 host=database_config['host'],

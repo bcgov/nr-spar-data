@@ -34,7 +34,7 @@ def db_config_test(type_,schema_):
             "schema": schema_,
             "test_query": "SELECT 1 a"
         }
-    return dbConfig
+    return dbconfig
 
 def required_variables_exists():
     ret = True

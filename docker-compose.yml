@@ -9,7 +9,7 @@ x-var:
     postgres
 
 x-postgres-vars: &postgres-vars
-  POSTGRES_HOST: localhost
+  POSTGRES_HOST: database
   POSTGRES_PORT: 5432
   POSTGRES_USER: *POSTGRES_USER
   POSTGRES_PASSWORD: *POSTGRES_PASSWORD

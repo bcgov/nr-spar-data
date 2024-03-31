@@ -12,12 +12,12 @@ ARG PIP_NO_CACHE_DIR="off" \
     PYTHONUNBUFFERED="1"
 
 # Copy files and install requirements
-WORKDIR /app
+WORKDIR /sync
 COPY requirements.txt .
 RUN pip install -r ./requirements.txt
 
 # Start the app
-WORKDIR /app/src
+WORKDIR /sync/src
 COPY src .
 USER 1001
 CMD python3 main.py
