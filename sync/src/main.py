@@ -19,15 +19,17 @@ def required_variables_exists():
     print("-- 1. Checking if required variables are defined")
     print("-------------------------------------")
     
-    if !env_var_is_filled("test_mode") or 
-       !env_var_is_filled("POSTGRES_HOST") or 
-       !env_var_is_filled("POSTGRES_USER") or 
-       !env_var_is_filled("POSTGRES_PASSWORD") or 
-       !env_var_is_filled("POSTGRES_DATABASE"):
+    if not env_var_is_filled("test_mode") or \
+       not env_var_is_filled("POSTGRES_HOST") or  \
+       not env_var_is_filled("POSTGRES_USER") or \
+       not env_var_is_filled("POSTGRES_PASSWORD") or \
+       not env_var_is_filled("POSTGRES_DATABASE") or \
+       not env_var_is_filled("ORACLE_USER") or \
+       not env_var_is_filled("ORACLE_PASSWORD"):
        ret = False        
         
     if ret:
-        print("Required variable test passed!")
+        print("Required variable tests passed!")
     else:
         raise Exception("Not all required variables to execute a instance of Data Sync Engine exists.")
     
