@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, MetaData, text
 from sqlalchemy.engine import URL
 
 class test_db_connection:
@@ -20,16 +20,16 @@ class test_db_connection:
             connection.close()
         
         if database_config['type'] == 'POSTGRES':
+            import psycopg2
             dbc = database_config # alias
             connection_string = test_db_connection.format_connection_string(database_config)
             engine = create_engine(connection_string)
             #conn = engine.connect().execution_options(autocommit=False)
-            conn = engine.raw_connection()
-            cursor = conn.cursor(pymysql.cursors.DictCursor)
-            cursor.execute(text(database_config["test_query"]))
-            result = cursor.fetchall()
-            print(result)
-            return result
+            sql_query = text(database_config["test_query"])
+            results = engine.execute(sql_query).fetchall()
+            for record in results:
+                print(record)
+            return results
     
     def do_test_old(database_config):
         """ Test Connection """
