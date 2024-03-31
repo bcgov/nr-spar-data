@@ -41,7 +41,7 @@ def required_variables_exists():
     ret = True
     
     print("-------------------------------------")
-    print("----- ELT Tool: Unit test Execution  ")
+    print("----- ETL Tool: Unit test Execution  ")
     print("-- 1. Checking if required variables are defined")
     print("-------------------------------------")
     
@@ -74,16 +74,11 @@ def testOracleConnection():
     print(d)
     
 def testPostgresConnection():
+    print("-------------------------------------")
     print("-- 2. Checking if Postgres connection is available and reachable")
+    print("-------------------------------------")
     from module.test_db_connection import test_db_connection
     dbConfig = db_config_test("POSTGRES","spar")
-    
-    response = os.system("ping -c 1 " + dbConfig["host"] )
-    if response == 0:
-        print("POSTGRES Host ("+dbConfig["host"]+") is reachable")
-    else:
-        print("POSTGRES Host ("+dbConfig["host"]+") is unreachable")
-        
     d = test_db_connection.do_test(dbConfig)
     print(d)
         

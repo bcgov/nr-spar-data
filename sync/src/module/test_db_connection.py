@@ -21,12 +21,11 @@ class test_db_connection:
         
         if database_config['type'] == 'POSTGRES':
             import psycopg2
-            dbc = database_config # alias
             connection_string = test_db_connection.format_connection_string(database_config)
             engine = create_engine(connection_string)
-            #conn = engine.connect().execution_options(autocommit=False)
+            conn = engine.connect().execution_options(autocommit=False)
             sql_query = text(database_config["test_query"])
-            results = engine.execute(sql_query).fetchall()
+            results = conn.execute(sql_query).fetchall()
             for record in results:
                 print(record)
             return results
