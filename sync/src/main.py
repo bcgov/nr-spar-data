@@ -30,6 +30,7 @@ def db_config_test(type_,schema_):
             "username": os.environ.get("POSTGRES_USER"),
             "password": os.environ.get("POSTGRES_PASSWORD"),
             "host": os.environ.get("POSTGRES_HOST"),
+            "database": os.environ.get("POSTGRES_DATABASE"),
             "port": os.environ.get("POSTGRES_PORT"),
             "schema": schema_,
             "test_query": "SELECT 1 a"
