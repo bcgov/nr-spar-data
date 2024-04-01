@@ -64,12 +64,12 @@ def required_variables_exists():
 def testOracleConnection():
     print("-- 3. Checking if Oracle connection is available and reachable")
     dbConfig = db_config_test("ORACLE","THE") 
-    response = os.system("ping -c 1 " + dbConfig["host"] )
-    if response == 0:
-        print("ORACLE Host ("+dbConfig["host"]+") is reachable")
-    else:
-        print("ORACLE Host ("+dbConfig["host"]+") is unreachable")
-        
+    #response = os.system("ping -c 1 " + dbConfig["host"] )
+    #if response == 0:
+    #    print("ORACLE Host ("+dbConfig["host"]+") is reachable")
+    #else:
+    #    print("ORACLE Host ("+dbConfig["host"]+") is unreachable")
+    #    
     d = test_db_connection.do_test(dbConfig)
     print(d)
     

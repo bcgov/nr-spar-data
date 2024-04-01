@@ -34,8 +34,8 @@ class test_db_connection:
         """ Test Connection """
         connection_string = test_db_connection.format_connection_string(database_config)
         ssl_args = test_db_connection.get_ssl_args(database_config)
-        print(ssl_args)
-        print(connection_string)
+        #print(ssl_args)
+        #print(connection_string)
         engine = create_engine(connection_string,connect_args=ssl_args,)
         conn = engine.connect().execution_options(autocommit=False)
         result = conn.execute(text(database_config["test_query"]))
@@ -57,7 +57,7 @@ class test_db_connection:
         """ Formats the connection string based on the database type and the connection configuration. """
         if database_config['type'] == 'ORACLE':
             import oracledb
-            print("Oracle DB Connection to " + database_config['host'] + ", SN=" + database_config['service_name'])
+            #print("Oracle DB Connection to " + database_config['host'] + ", SN=" + database_config['service_name'])
             cp = oracledb.ConnectParams(
                 host=database_config['host'],
                 port=database_config['port'],
@@ -87,7 +87,7 @@ class test_db_connection:
         """
         if database_config['type'] == 'ORACLE':
             import cx_Oracle
-            print("Oracle DB Connection to " + database_config['host'] + ", SN=" + database_config['service_name'])
+            #print("Oracle DB Connection to " + database_config['host'] + ", SN=" + database_config['service_name'])
             if database_config['type'] == 'ORACLE':
                 dsn = cx_Oracle.makedsn(
                     database_config['host'], 
