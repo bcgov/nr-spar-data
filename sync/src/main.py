@@ -114,13 +114,7 @@ def testVault():
     else:
         print("Vault cannot be reached as required variables are not correctly informed")
 
-
-def main() -> None:
-    logging_config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"), 
-                              disable_existing_loggers=False)   
-    data_sync.data_sync()
-
-if __name__ == '__main__':
+def inicializa() -> None:
     definitiion_of_yes = ["Y","YES","1","T","TRUE"]
     if os.environ.get("test_mode") is None:
         print("Error: test mode variable is None")
@@ -135,5 +129,16 @@ if __name__ == '__main__':
             # testVault()
         else:            
             print("Starting main process ...")
-            # main()
+            execute_etl()
+
+def main() -> None:
+    inicializa()
+
+def execute_etl() -> None:
+    logging_config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"), 
+                              disable_existing_loggers=False)   
+    data_sync.data_sync()
+
+if __name__ == '__main__':
+    inicializa()
 
