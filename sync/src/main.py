@@ -62,14 +62,17 @@ def required_variables_exists():
         raise Exception("Not all required variables to execute a instance of Data Sync Engine exists.")
     
 def testOracleConnection():
-    print("-- 3. Checking if Oracle connection is available and reachable")
-    dbConfig = db_config_test("ORACLE","THE") 
     #response = os.system("ping -c 1 " + dbConfig["host"] )
     #if response == 0:
     #    print("ORACLE Host ("+dbConfig["host"]+") is reachable")
     #else:
     #    print("ORACLE Host ("+dbConfig["host"]+") is unreachable")
     #    
+    print("-------------------------------------")
+    print("-- 3. Checking if Oracle connection is available and reachable")
+    print("-------------------------------------")
+    from module.test_db_connection import test_db_connection
+    dbConfig = db_config_test("ORACLE","THE") 
     d = test_db_connection.do_test(dbConfig)
     print(d)
     
@@ -127,6 +130,7 @@ if __name__ == '__main__':
             print("Executing in Test mode")
             required_variables_exists()
             testPostgresConnection()
+            testOracleConnection()
             # Vault disabled
             # testVault()
         else:            
