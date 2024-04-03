@@ -18,6 +18,9 @@ parameters:
   - name: APP
     description: Application/component name
     value: database
+  - name: ORACLE_HOST
+    description: Oracle database host
+    value: nrcdb03.bcgov
   - name: ORACLE_USER
     description: Oracle database username for API
     value: proxy_fsa_spar_read_only_user
@@ -74,6 +77,7 @@ objects:
       labels:
         app: ${REPO}-${ZONE}
     stringData:
+      oracle-host: ${ORACLE_HOST}
       oracle-user: ${ORACLE_USER}
       oracle-password: ${ORACLE_PASSWORD}
   - kind: PersistentVolumeClaim

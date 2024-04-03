@@ -90,6 +90,11 @@ objects:
                         secretKeyRef:
                           name: ${REPO}-${ZONE}-database
                           key: database-user
+                    - name: ORACLE_HOST
+                      valueFrom:
+                        secretKeyRef:
+                          name: ${REPO}-${ZONE}-oracle-api
+                          key: oracle-host
                     - name: ORACLE_USER
                       valueFrom:
                         secretKeyRef:
