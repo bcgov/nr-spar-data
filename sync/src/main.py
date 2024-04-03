@@ -123,6 +123,7 @@ def main() -> None:
             print("Starting main process ...")
             #execute_etl()
 
+# MAIN Execution
 def execute_etl() -> None:
     logging_config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"), 
                               disable_existing_loggers=False)   
