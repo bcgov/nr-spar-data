@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - run: |
-        echo "Digest: ${{ needs.build }}"
+        echo "Digest: ${{ toJson(needs.build.outputs.digest) }}"
 
   # deploy:
   #   name: Deploy
