@@ -20,7 +20,7 @@ def db_config_test(type_,schema_):
             "password": os.environ.get("ORACLE_PASSWORD"),
             "host": os.environ.get("ORACLE_HOST"),
             "port": os.environ.get("ORACLE_PORT"),
-            "service_name": os.environ.get("ORACLE_SN"),
+            "service_name": os.environ.get("ORACLE_SERVICE"),
             "schema": schema_,
             "test_query": "SELECT 'SUCCESS' a FROM DUAL"
         }
@@ -51,7 +51,7 @@ def required_variables_exists():
        not env_var_is_filled("POSTGRES_PASSWORD") or \
        not env_var_is_filled("POSTGRES_DATABASE") or \
        not env_var_is_filled("ORACLE_HOST") or \
-       not env_var_is_filled("ORACLE_SN") or \
+       not env_var_is_filled("ORACLE_SERVICE") or \
        not env_var_is_filled("ORACLE_USER") or \
        not env_var_is_filled("ORACLE_PASSWORD"):
        ret = False        
