@@ -33,11 +33,11 @@ jobs:
 
   check-outputs:
     name: Check Outputs
-    if: needs.build.outputs.digest
     needs: [build]
     runs-on: ubuntu-22.04
     steps:
-      - run: echo "Digest: ${{ needs.build.outputs.digest }}"
+      - run: |
+        echo "Digest: ${{ needs.build.outputs.digest }}"
 
   # deploy:
   #   name: Deploy
