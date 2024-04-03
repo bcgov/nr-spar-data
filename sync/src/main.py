@@ -62,12 +62,6 @@ def required_variables_exists():
         raise Exception("Not all required variables to execute a instance of Data Sync Engine exists.")
     
 def testOracleConnection():
-    #response = os.system("ping -c 1 " + dbConfig["host"] )
-    #if response == 0:
-    #    print("ORACLE Host ("+dbConfig["host"]+") is reachable")
-    #else:
-    #    print("ORACLE Host ("+dbConfig["host"]+") is unreachable")
-    #    
     print("-------------------------------------")
     print("-- 3. Checking if Oracle connection is available and reachable")
     print("-------------------------------------")
@@ -104,18 +98,16 @@ def testVault():
         print("Vault token value is not in the pattern requested")
     
     if ret:
-        # vault_url = 'https://knox.io.nrs.gov.bc.ca/v1/groups/data/spar/test'
         headers = {'X-Vault-Token': vault_token}
         res = requests.get(vault_url, headers=headers)
-        # print(res.text)    
         j = json.loads(res.text)
-        # print(j)
         
     else:
         print("Vault cannot be reached as required variables are not correctly informed")
 
-def inicializa() -> None:
+def main() -> None:
     definitiion_of_yes = ["Y","YES","1","T","TRUE"]
+    print(os.environ.get("test_mode"))
     if os.environ.get("test_mode") is None:
         print("Error: test mode variable is None")
     else:
@@ -129,10 +121,7 @@ def inicializa() -> None:
             # testVault()
         else:            
             print("Starting main process ...")
-            execute_etl()
-
-def main() -> None:
-    inicializa()
+            #execute_etl()
 
 def execute_etl() -> None:
     logging_config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"), 
@@ -140,5 +129,5 @@ def execute_etl() -> None:
     data_sync.data_sync()
 
 if __name__ == '__main__':
-    inicializa()
+    main()
 
