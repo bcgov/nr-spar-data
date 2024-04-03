@@ -110,6 +110,11 @@ objects:
                         secretKeyRef:
                           name: ${REPO}-${ZONE}-database
                           key: database-password
+                    - name: POSTGRES_PORT
+                      valueFrom:
+                        secretKeyRef:
+                          name: ${REPO}-${ZONE}-database
+                          key: database-port
                     - name: POSTGRES_USER
                       valueFrom:
                         secretKeyRef:

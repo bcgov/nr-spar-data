@@ -33,6 +33,9 @@ parameters:
   - name: ORG
     description: GitHub organization name
     value: bcgov
+  - name: POSTGRES_PORT
+    description: Postgres database port
+    value: "5432"
   - name: REPO
     description: Repository name
     value: nr-spar-data
@@ -75,6 +78,7 @@ objects:
     stringData:
       database-name: ${APP}
       database-password: ${POSTGRES_PASSWORD}
+      database-port: ${POSTGRES_PORT}
       database-user: ${APP}
   - apiVersion: v1
     kind: Secret
@@ -175,6 +179,11 @@ objects:
                     secretKeyRef:
                       name: ${REPO}-${ZONE}-${APP}
                       key: database-password
+                - name: POSTGRES_PORT
+                  valueFrom:
+                    secretKeyRef:
+                      name: ${REPO}-${ZONE}-${APP}
+                      key: database-port
                 - name: POSTGRES_USER
                   valueFrom:
                     secretKeyRef:
