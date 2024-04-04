@@ -76,9 +76,20 @@ jobs:
           post_rollout: oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }}
           triggers: ${{ inputs.triggers }}
 
+  dump:
+    name: Dump Vars
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump
+        run: |
+          echo "inputs.verify: ${{ inputs.verify }}"
+          echo "needs.deploy.outputs.triggered: ${{ needs.deploy.outputs.triggered }}"
+          echo "verify condition: ${{ inputs.verify == true && needs.deploy.outputs.triggered == true }}"
+
   verify:
     name: Verify
-    # if: inputs.verify == true && needs.deploy.outputs.triggered == true
+    if: inputs.verify == true && needs.deploy.outputs.triggered == true
     environment: ${{ inputs.environment }}
     needs: [deploy]
     runs-on: ubuntu-latest
