@@ -90,7 +90,7 @@ jobs:
           triggers: ${{ inputs.triggers }}
 
       - name: Verify
-        if: steps.diff.outputs.triggered == true
+        if: steps.diff.outputs.triggered == 'true'
         run: |
           # Check job logs
 
