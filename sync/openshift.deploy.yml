@@ -71,8 +71,8 @@ objects:
                 - name: ${REPO}-${ZONE}
                   image: "${REGISTRY}/${ORG}/${REPO}/${APP}:${TAG}"
                   env:
-                    # - name: test_mode
-                    #   value: "${TEST_MODE}"
+                    - name: test_mode
+                      value: "${TEST_MODE}"
                     # - name: ORACLE_HOST
                     #   valueFrom:
                     #     secretKeyRef:
