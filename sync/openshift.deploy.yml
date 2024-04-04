@@ -71,55 +71,55 @@ objects:
                 - name: ${REPO}-${ZONE}
                   image: "${REGISTRY}/${ORG}/${REPO}/${APP}:${TAG}"
                   env:
-                    - name: test_mode
-                      value: "${TEST_MODE}"
-                    - name: ORACLE_HOST
-                      valueFrom:
-                        secretKeyRef:
-                          name: ${REPO}-${ZONE}-oracle
-                          key: oracle-host
-                    - name: ORACLE_PASSWORD
-                      valueFrom:
-                        secretKeyRef:
-                          name: ${REPO}-${ZONE}-oracle
-                          key: oracle-password
-                    - name: ORACLE_PORT
-                      valueFrom:
-                        secretKeyRef:
-                          name: ${REPO}-${ZONE}-oracle
-                          key: oracle-port
-                    - name: ORACLE_SERVICE
-                      valueFrom:
-                        secretKeyRef:
-                          name: ${REPO}-${ZONE}-oracle
-                          key: oracle-service
-                    - name: ORACLE_USER
-                      valueFrom:
-                        secretKeyRef:
-                          name: ${REPO}-${ZONE}-oracle
-                          key: oracle-user
-                    - name: POSTGRES_HOST
-                      value: ${REPO}-${ZONE}-database
-                    - name: POSTGRES_DATABASE
-                      valueFrom:
-                        secretKeyRef:
-                          name: ${REPO}-${ZONE}-database
-                          key: database-name
-                    - name: POSTGRES_PASSWORD
-                      valueFrom:
-                        secretKeyRef:
-                          name: ${REPO}-${ZONE}-database
-                          key: database-password
-                    - name: POSTGRES_PORT
-                      valueFrom:
-                        secretKeyRef:
-                          name: ${REPO}-${ZONE}-database
-                          key: database-port
-                    - name: POSTGRES_USER
-                      valueFrom:
-                        secretKeyRef:
-                          name: ${REPO}-${ZONE}-database
-                          key: database-user
+                    # - name: test_mode
+                    #   value: "${TEST_MODE}"
+                    # - name: ORACLE_HOST
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${REPO}-${ZONE}-oracle
+                    #       key: oracle-host
+                    # - name: ORACLE_PASSWORD
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${REPO}-${ZONE}-oracle
+                    #       key: oracle-password
+                    # - name: ORACLE_PORT
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${REPO}-${ZONE}-oracle
+                    #       key: oracle-port
+                    # - name: ORACLE_SERVICE
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${REPO}-${ZONE}-oracle
+                    #       key: oracle-service
+                    # - name: ORACLE_USER
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${REPO}-${ZONE}-oracle
+                    #       key: oracle-user
+                    # - name: POSTGRES_HOST
+                    #   value: ${REPO}-${ZONE}-database
+                    # - name: POSTGRES_DATABASE
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${REPO}-${ZONE}-database
+                    #       key: database-name
+                    # - name: POSTGRES_PASSWORD
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${REPO}-${ZONE}-database
+                    #       key: database-password
+                    # - name: POSTGRES_PORT
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${REPO}-${ZONE}-database
+                    #       key: database-port
+                    # - name: POSTGRES_USER
+                    #   valueFrom:
+                    #     secretKeyRef:
+                    #       name: ${REPO}-${ZONE}-database
+                    #       key: database-user
                   resources:
                     limits:
                       cpu: 250m
