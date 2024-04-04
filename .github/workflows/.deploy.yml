@@ -75,7 +75,8 @@ jobs:
           parameters: -p ZONE=${{ inputs.target }} -p TAG=${{ inputs.tag }}
           post_rollout: |
             oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }} &&
-            oc wait --for=jsonpath='{.status.failed}'=4 job/${{ env.JOB_JOB }} --timeout=1m || true &&
             oc logs -l job-name=${{ env.JOB_JOB }} --tail=50 --follow &&
+            oc get job ${{ env.JOB_JOB }} &&
             if [ $(oc get job ${{ env.JOB_JOB }} -o jsonpath='{.status.ready}') -ne 0 ]; then exit 1; fi
           triggers: ${{ inputs.triggers }}
+            # oc wait --for=jsonpath='{.status.failed}'=4 job/${{ env.JOB_JOB }} --timeout=1m || true &&
