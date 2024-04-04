@@ -73,46 +73,9 @@ jobs:
           oc_version: 4.13
           overwrite: true
           parameters: -p ZONE=${{ inputs.target }} -p TAG=${{ inputs.tag }}
-          post_rollout: oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }}
+          post_rollout: |
+            oc create job ${{ env.JOB_JOB }} --from=cronjob/${{ env.CRONJOB }} &&
+            oc wait --for=jsonpath='{.status.failed}'=4 job/${{ env.JOB_JOB }} --timeout=1m || true &&
+            oc logs -l job-name=${{ env.JOB_JOB }} --tail=50 --follow &&
+            if [ $(oc get job ${{ env.JOB_JOB }} -o jsonpath='{.status.ready}') -ne 0 ]; then exit 1; fi
           triggers: ${{ inputs.triggers }}
-
-  dump:
-    name: Dump Vars
-    needs: [deploy]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump
-        run: |
-          echo "inputs.verify: ${{ inputs.verify }}"
-          echo "needs.deploy.outputs.triggered: ${{ needs.deploy.outputs.triggered }}"
-          echo "verify condition: ${{ inputs.verify == true && needs.deploy.outputs.triggered == true }}"
-
-  verify:
-    name: Verify
-    if: inputs.verify == true && needs.deploy.outputs.triggered == true
-    environment: ${{ inputs.environment }}
-    needs: [deploy]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Verify
-        run: |
-          # Check job logs
-
-          # Login
-          oc login --token=${{ secrets.oc_token }} --server=${{ vars.oc_server }}
-          oc project ${{ secrets.oc_namespace }} #Safeguard!
-
-          # Follow
-          oc wait --for=jsonpath='{.status.failed}'=4 job/${{ env.JOB_JOB }} --timeout=1m || true
-          oc logs -l job-name=${{ env.JOB_JOB }} --tail=50 --follow
-
-          # Results and exit code
-          oc get job ${{ env.JOB_JOB }}
-
-          if [ $(oc get job ${{ env.JOB_JOB }} -o jsonpath='{.status.ready}') -eq 0 ]; then
-            echo "Job successful!"
-            exit 0
-          else
-            echo "Job failed!"
-            exit 1
-          fi
