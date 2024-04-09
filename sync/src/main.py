@@ -1,7 +1,7 @@
 import requests
 import json
 import module.data_synchronization as data_sync
-from logging import config as logging_config
+from logging import config as logging_config, basicConfig as loggingBasicConfig, DEBUG as loggingDEBUG
 import os
 import sys
 
@@ -11,7 +11,7 @@ def env_var_is_filled(variable):
         return False
     return True
     
-def db_config_test(type_,schema_):
+def generate_db_config(type_,schema_):
     dbconfig = {}
     if type_ == "ORACLE":
         dbconfig = {
@@ -47,9 +47,11 @@ def required_variables_exists():
     
     if not env_var_is_filled("test_mode") or \
        not env_var_is_filled("POSTGRES_HOST") or  \
+       not env_var_is_filled("POSTGRES_PORT") or  \
        not env_var_is_filled("POSTGRES_USER") or \
        not env_var_is_filled("POSTGRES_PASSWORD") or \
        not env_var_is_filled("POSTGRES_DATABASE") or \
+       not env_var_is_filled("ORACLE_PORT") or \
        not env_var_is_filled("ORACLE_HOST") or \
        not env_var_is_filled("ORACLE_SERVICE") or \
        not env_var_is_filled("ORACLE_USER") or \
@@ -66,7 +68,7 @@ def testOracleConnection():
     print("-- 3. Checking if Oracle connection is available and reachable")
     print("-------------------------------------")
     from module.test_db_connection import test_db_connection
-    dbConfig = db_config_test("ORACLE","THE") 
+    dbConfig = generate_db_config("ORACLE","THE") 
     d = test_db_connection.do_test(dbConfig)
     print(d)
     
@@ -75,7 +77,7 @@ def testPostgresConnection():
     print("-- 2. Checking if Postgres connection is available and reachable")
     print("-------------------------------------")
     from module.test_db_connection import test_db_connection
-    dbConfig = db_config_test("POSTGRES","spar")
+    dbConfig = generate_db_config("POSTGRES","spar")
     d = test_db_connection.do_test(dbConfig)
     print(d)
         
@@ -121,13 +123,16 @@ def main() -> None:
             # testVault()
         else:            
             print("Starting main process ...")
-            #execute_etl()
+            
+            dbOracle = generate_db_config("ORACLE","THE") 
+            dbPostgres = generate_db_config("POSTGRES","spar")
+            execute_etl(dbPostgres, dbOracle)
 
 # MAIN Execution
-def execute_etl() -> None:
-    logging_config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"), 
-                              disable_existing_loggers=False)   
-    data_sync.data_sync()
+def execute_etl(dbPostgres, dbOracle) -> None:
+    #logging_config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"), disable_existing_loggers=False)   
+    loggingBasicConfig(level=loggingDEBUG, stream=sys.stdout)
+    data_sync.data_sync(dbPostgres, dbOracle)
 
 if __name__ == '__main__':
     main()

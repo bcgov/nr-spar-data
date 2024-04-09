@@ -15,7 +15,7 @@ from module.custom_exception import TransformException, LoadException, ExtractEx
 
 logger = logging.getLogger(__name__)
 
-def data_sync():
+def data_sync(source_config, target_config):
     """ 
     Runs the data synchronization between source and target databases for all defined domains - one at a time.
     """
@@ -27,8 +27,8 @@ def data_sync():
     db_config = meta.open_json_file(path.abspath(path.join(current_cwd, 'config', 'database_config.json')))
     
     # Loading source and target database connections parameters
-    source_db_config = db_config['postgres_local']
-    target_db_config = db_config['oracle_local']
+    source_db_config = source_config #db_config['postgres_local']
+    target_db_config = target_config #['oracle_local']
     
     # Getting all the folders under domains folder and creating a sorted list of domains
     domains_path = path.abspath(path.join(current_cwd, 'domains'))
