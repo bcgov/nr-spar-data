@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bullseye AS build
+FROM python:3.13.0a4-slim AS build
 
 # Packages
 RUN apt update && \
