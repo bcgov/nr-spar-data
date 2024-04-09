@@ -10,11 +10,15 @@ class database_connection(object):
     def __init__(self, database_config: str):
         self.conn = None
         self.engine = None
+        self.database_config = database_config
         self.database_type = database_config['type']
         self.conn_string = self.format_connection_string(database_config)
 
     def __enter__(self):
-        self.engine = create_engine(self.conn_string)
+        if self.conn_string == 'ORACLE':
+            self.engine = self.get_oracle_engine()
+        else:
+            self.engine = create_engine(self.conn_string)
         self.conn = self.engine.connect().execution_options(autocommit=False)
         return self
     
@@ -52,21 +56,26 @@ class database_connection(object):
         """ Runs a SQL statement. """
         self.conn.rollback()
         
+    def get_oracle_engine(self):
+        import ssl
+        import oracledb
+        dbc = self.database_config # alias
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        ssl_context.set_ciphers('DEFAULT@SECLEVEL=1')
+        #connection = oracledb.connect(user=dbc['username'], password=dbc['password'],dsn=f"(DESCRIPTION=(ADDRESS=(PROTOCOL=TCPS)(HOST={dbc['host']})(PORT={dbc['port']}))(CONNECT_DATA=(SERVICE_NAME={dbc['service_name']})))",externalauth=False, ssl_context = ssl_context)
+        return create_engine(f'oracle+oracledb://:@',
+                        connect_args={
+                            "user": dbc['username'],
+                            "password": dbc['password'],
+                            "dsn": f"(DESCRIPTION=(ADDRESS=(PROTOCOL=TCPS)(HOST={dbc['host']})(PORT={dbc['port']}))(CONNECT_DATA=(SERVICE_NAME={dbc['service_name']})))",
+                            "externalauth":False,
+                            "ssl_context": ssl_context
+                        })
+        
     def format_connection_string(self, database_config: str):
         """ Formats the connection string based on the database type and the connection configuration. """
         if database_config['type'] == 'ORACLE':
-            dsn = cx_Oracle.makedsn(
-                database_config['host'], 
-                database_config['port'], 
-                service_name=database_config['service_name']
-            )
-
-            connection_string = (
-                'oracle+cx_oracle://{}:{}@'.format(
-                    database_config['username'], 
-                    database_config['password']
-                ) + dsn
-            )
+            return 'ORACLE'
 
         if database_config['type'] == 'POSTGRES':
             connection_string = 'postgresql+psycopg2://{}:{}@{}:{}/{}'.format(

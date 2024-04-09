@@ -53,7 +53,7 @@ def get_next_data_sync_id(database_conn: object,
     Returns:
         int: data_sync_id to be used in the current running execution
     """
-    select_sync_id_stm = "select max(data_sync_id) + 1  \
+    select_sync_id_stm = "select COALESCE(max(data_sync_id) + 1,1)  \
                           from {}.data_sync_control".format(database_schema)
                         
     record = database_conn.select(select_sync_id_stm)

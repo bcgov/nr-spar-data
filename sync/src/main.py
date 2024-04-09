@@ -20,7 +20,7 @@ def generate_db_config(type_,schema_):
             "password": os.environ.get("ORACLE_PASSWORD"),
             "host": os.environ.get("ORACLE_HOST"),
             "port": os.environ.get("ORACLE_PORT"),
-            "service_name": os.environ.get("ORACLE_SERVICE"),
+            "service_name": os.environ.get("ORACLE_SN"),
             "schema": schema_,
             "test_query": "SELECT 'SUCCESS' a FROM DUAL"
         }
@@ -132,7 +132,7 @@ def main() -> None:
 def execute_etl(dbPostgres, dbOracle) -> None:
     #logging_config.fileConfig(os.path.join(os.path.dirname(__file__), "logging.ini"), disable_existing_loggers=False)   
     loggingBasicConfig(level=loggingDEBUG, stream=sys.stdout)
-    data_sync.data_sync(dbPostgres, dbOracle)
+    data_sync.data_sync( source_config = dbOracle, target_config = dbPostgres ,track_config = dbPostgres )
 
 if __name__ == '__main__':
     main()
