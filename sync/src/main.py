@@ -20,7 +20,7 @@ def generate_db_config(type_,schema_):
             "password": os.environ.get("ORACLE_PASSWORD"),
             "host": os.environ.get("ORACLE_HOST"),
             "port": os.environ.get("ORACLE_PORT"),
-            "service_name": os.environ.get("ORACLE_SN"),
+            "service_name": os.environ.get("ORACLE_SERVICE"),
             "schema": schema_,
             "test_query": "SELECT 'SUCCESS' a FROM DUAL"
         }
