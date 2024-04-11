@@ -6,7 +6,7 @@ x-var:
   - &POSTGRES_PASSWORD
     default
   - &POSTGRES_DATABASE
-    postgres
+    spar
 
 x-postgres-vars: &postgres-vars
   POSTGRES_HOST: database

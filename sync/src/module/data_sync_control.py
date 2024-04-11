@@ -73,11 +73,11 @@ def get_incrementa_dt(database_conn: object,
     Returns:
         datetime: Incremental date filter
     """
-    DEFATUL_INCREMENTAL_DT = '01/01/2023 00:00:00'
+    DEFAULT_INCREMENTAL_DT = '01/01/2023 00:00:00'
 
-    defatult_inc_dt = datetime.strptime(DEFATUL_INCREMENTAL_DT, '%m/%d/%Y %H:%M:%S')
+    defatult_inc_dt = datetime.strptime(DEFAULT_INCREMENTAL_DT, '%m/%d/%Y %H:%M:%S')
     
-    select_inc_dt_stm = "select max(start_dt)       \
+    select_inc_dt_stm = "select COALESCE(max(start_dt),'1900-01-01')       \
                          from {}.data_sync_control  \
                          where status = 'Completed'".format(database_schema)
                         

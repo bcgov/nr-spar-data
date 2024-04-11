@@ -53,7 +53,8 @@ def data_sync(source_config, target_config, track_config):
                         domain_folder_path = path.abspath(path.join(domains_path, domains_folders[i]))
                         domain_name = domains_folders[i].split('_', 1)[1]
                         logger.info(f'Sync {domain_name} Domain ({i}/{len(domain_loading_order)})')
-                        sync_domain(track_db_conn, source_db_conn, source_db_config['schema'], target_db_conn, domain_folder_path, domain_name)
+                        print(track_db_config['schema'])
+                        sync_domain(track_db_conn, track_db_config['schema'], source_db_conn, source_db_config['schema'], target_db_conn, domain_folder_path, domain_name)
             
             except ExtractException:
                 data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Failed')
@@ -75,6 +76,7 @@ def data_sync(source_config, target_config, track_config):
     logger.info('***** Finish Data Sync *****')
         
 def sync_domain(track_db_conn: object,
+                track_db_schema: str,
                 source_db_conn: object,
                 source_db_schema: str,
                 target_db_conn: object,
@@ -98,7 +100,8 @@ def sync_domain(track_db_conn: object,
     tgt_domain_metadata = meta.open_json_file(path.abspath(path.join(domain_folder_path, 'target.json')))
     
     start_time = time.time()
-    domain_dfs, staging_dfs = extract_domain(track_db_conn,source_db_conn, source_db_schema, query_files_path, domain_name, src_domain_metadata)
+    print(track_db_schema)
+    domain_dfs, staging_dfs = extract_domain(track_db_conn,track_db_schema, source_db_conn, source_db_schema,  query_files_path, domain_name, src_domain_metadata)
     elapsed_time = time.time() - start_time
     logger.debug(f'Extraction of {domain_name} took {timedelta(seconds=elapsed_time)}')
     
@@ -113,6 +116,7 @@ def sync_domain(track_db_conn: object,
     logger.debug(f'Loading of {domain_name} took {timedelta(seconds=elapsed_time)}')
     
 def extract_domain(track_db_conn: object,
+                   track_schema: str,
                    database_conn: object,
                    database_schema: str,
                    query_files_path: str,
@@ -141,11 +145,17 @@ def extract_domain(track_db_conn: object,
         # Getting metadata for each extraction table defined in the domain metadata
         tables_metadata = {table['file_name'].split('.')[0]: table for table in domain_metadata['tables'] if table['query_type'] == 'extract'}
         # Getting incremental data to be used in the extraction
-        incremental_dt = data_sync_ctl.get_incrementa_dt(track_db_conn, database_schema)
+        print('--- DATABASE SCHEMA IS:')
+        print(track_schema)
+        incremental_dt = data_sync_ctl.get_incrementa_dt(track_db_conn, track_schema)
         params = {'incremental_dt': incremental_dt}
+        
+        print(incremental_dt)
             
         for table_name in tables_metadata:
             logger.info(f'{table_name} Table Extraction')
+            print('----- Loading query: ')
+            print(path.abspath(path.join(query_files_path, tables_metadata[table_name]['file_name'])))
             # Extracting all data using incremental date from last completed execution
             table_df = pd.read_sql(meta.get_inc_dt_qry_from_file(tables_metadata[table_name],
                                                                 path.abspath(path.join(query_files_path, 
