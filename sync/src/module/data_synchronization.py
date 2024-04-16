@@ -153,7 +153,7 @@ def extract_domain(track_db_conn: object,
         print(incremental_dt)
             
         for table_name in tables_metadata:
-            logger.info(f'{table_name} Table Extraction')
+            logger.info(f'{table_name} : Table Extraction')
             print('----- Loading query: ')
             print(path.abspath(path.join(query_files_path, tables_metadata[table_name]['file_name'])))
             # Extracting all data using incremental date from last completed execution
@@ -165,7 +165,9 @@ def extract_domain(track_db_conn: object,
         
             if domain_metadata.get('leading_column'):
                 # Extracting records that had some errors and were marked for retry based on the leading column defined for the domain
+                print('----- Retried by leading column: ')
                 retry_df = extract_retry_records(track_db_conn,
+                                                track_schema,
                                                 database_conn,
                                                 database_schema,
                                                 domain_name,
@@ -174,7 +176,9 @@ def extract_domain(track_db_conn: object,
                                                                                                             tables_metadata[table_name]['file_name']))))
             else:
                 # Extracting records that had some errors and were marked for retry based on the table's primary key
+                print('----- Retried by PK: ')
                 retry_df = extract_retry_records(track_db_conn,
+                                                track_schema,
                                                 database_conn,
                                                 database_schema,
                                                 table_name.lower(),
@@ -220,6 +224,7 @@ def extract_domain(track_db_conn: object,
         return domain_dfs, staging_dfs
 
 def extract_retry_records(track_db_conn: object,
+                          track_schema: str,
                           database_conn: object,
                           database_schema: str,
                           entity_name: str,
@@ -236,8 +241,9 @@ def extract_retry_records(track_db_conn: object,
     Returns:
         pd.DataFrame: Table data retrieved for retry records
     """
+    logger.info('-- Extract Retry records from old execution errors')
     retry_df = pd.DataFrame()
-    data_sync_id = data_sync_ctl.get_last_completed_data_sync_id(track_db_conn, database_schema)
+    data_sync_id = data_sync_ctl.get_last_completed_data_sync_id(track_db_conn, track_schema)
     
     if data_sync_id:
         # Getting all entity ids that were marked to be retrieved
@@ -266,6 +272,7 @@ def transform_domain(domain_dfs: dict,
     """
     logger.info('***** Start Transformation Session *****')
     for key in domain_dfs:
+        print('domain_dfs key:' + key)
         # Running transformations for each target table
         domain_dfs[key] = transf.run_transformations(domain_dfs[key], staging_dfs, key)
         if domain_dfs[key] is None:
@@ -291,6 +298,8 @@ def adjust_columns(domain_dfs: dict,
         dict: Dictionary with all target tables columns adjusted (as Pandas DataFrames objects)
     """
     logger.info('Adjusting and Mapping Columns')
+    for key in domain_dfs.keys(): #<-- Some error here!
+        print('domain_dfs key:' + key)
     try:
         for table_metadata in domain_metadata['tables']:
             columns_map = table_metadata['columns']
