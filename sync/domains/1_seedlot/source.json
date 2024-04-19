@@ -3,6 +3,7 @@
     "tables":[
         {
             "file_name": "ORACLE_SEEDLOT.sql",
+            "reference_table": "SEEDLOT",
             "old_incremental_dt": "where s.update_timestamp >= %(incremental_dt)s",
             "incremental_dt": "where s.update_timestamp >= :incremental_dt ",
             "retry_records": "where s.seedlot_number = %(seedlot_number)s",

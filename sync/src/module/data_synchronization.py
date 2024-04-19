@@ -1,5 +1,6 @@
 import time
 import logging
+import json
 import numpy as np
 import pandas as pd
 import module.metadata_handler as meta
@@ -53,7 +54,6 @@ def data_sync(source_config, target_config, track_config):
                         domain_folder_path = path.abspath(path.join(domains_path, domains_folders[i]))
                         domain_name = domains_folders[i].split('_', 1)[1]
                         logger.info(f'Sync {domain_name} Domain ({i}/{len(domain_loading_order)})')
-                        print(track_db_config['schema'])
                         sync_domain(track_db_conn, track_db_config['schema'], source_db_conn, source_db_config['schema'], target_db_conn, domain_folder_path, domain_name)
             
             except ExtractException:
@@ -100,7 +100,6 @@ def sync_domain(track_db_conn: object,
     tgt_domain_metadata = meta.open_json_file(path.abspath(path.join(domain_folder_path, 'target.json')))
     
     start_time = time.time()
-    print(track_db_schema)
     domain_dfs, staging_dfs = extract_domain(track_db_conn,track_db_schema, source_db_conn, source_db_schema,  query_files_path, domain_name, src_domain_metadata)
     elapsed_time = time.time() - start_time
     logger.debug(f'Extraction of {domain_name} took {timedelta(seconds=elapsed_time)}')
@@ -143,14 +142,13 @@ def extract_domain(track_db_conn: object,
     
     try:
         # Getting metadata for each extraction table defined in the domain metadata
-        tables_metadata = {table['file_name'].split('.')[0]: table for table in domain_metadata['tables'] if table['query_type'] == 'extract'}
+        tables_metadata = {table['reference_table']: table for table in domain_metadata['tables'] if table['query_type'] == 'extract'}
         # Getting incremental data to be used in the extraction
-        print('--- DATABASE SCHEMA IS:')
-        print(track_schema)
+        print('--- DATABASE SCHEMA IS:' + track_schema)
         incremental_dt = data_sync_ctl.get_incrementa_dt(track_db_conn, track_schema)
         params = {'incremental_dt': incremental_dt}
         
-        print(incremental_dt)
+        print('--- incremental_dt IS:' + incremental_dt.strftime("%B %d, %Y"))
             
         for table_name in tables_metadata:
             logger.info(f'{table_name} : Table Extraction')
@@ -165,7 +163,7 @@ def extract_domain(track_db_conn: object,
         
             if domain_metadata.get('leading_column'):
                 # Extracting records that had some errors and were marked for retry based on the leading column defined for the domain
-                print('----- Retried by leading column: ')
+                print('----- Extracting records by leading column: ')
                 retry_df = extract_retry_records(track_db_conn,
                                                 track_schema,
                                                 database_conn,
@@ -176,7 +174,7 @@ def extract_domain(track_db_conn: object,
                                                                                                             tables_metadata[table_name]['file_name']))))
             else:
                 # Extracting records that had some errors and were marked for retry based on the table's primary key
-                print('----- Retried by PK: ')
+                print('----- Extracting records by PK: ')
                 retry_df = extract_retry_records(track_db_conn,
                                                 track_schema,
                                                 database_conn,
@@ -190,7 +188,8 @@ def extract_domain(track_db_conn: object,
             logger.info(f'{len(domain_dfs[table_name].index)} rows extracted')
         
         # Getting metadata for each stagging/lookup table defined in the domain metadata 
-        stagings_metadata = {table['file_name'].split('.')[0]: table for table in domain_metadata['tables'] if table['query_type'] in ('staging', 'lookup')}
+        print('--- Staging Dataframe gathering: ')
+        stagings_metadata = {table['reference_table']: table for table in domain_metadata['tables'] if table['query_type'] in ('staging', 'lookup')}
         staging_dfs = {}   
         
         for table_name in stagings_metadata:
@@ -271,8 +270,8 @@ def transform_domain(domain_dfs: dict,
         dict: Dictionary with all target tables data transformed, ready to be loaded (as Pandas DataFrames objects)
     """
     logger.info('***** Start Transformation Session *****')
+    
     for key in domain_dfs:
-        print('domain_dfs key:' + key)
         # Running transformations for each target table
         domain_dfs[key] = transf.run_transformations(domain_dfs[key], staging_dfs, key)
         if domain_dfs[key] is None:
@@ -298,15 +297,17 @@ def adjust_columns(domain_dfs: dict,
         dict: Dictionary with all target tables columns adjusted (as Pandas DataFrames objects)
     """
     logger.info('Adjusting and Mapping Columns')
-    for key in domain_dfs.keys(): #<-- Some error here!
-        print('domain_dfs key:' + key)
+    
+    # Check metadata
     try:
         for table_metadata in domain_metadata['tables']:
             columns_map = table_metadata['columns']
             rename_columns = {columns_map[key]: key for key in columns_map}
             # Renaming columns as mapped in the target domain metadata
             domain_dfs[table_metadata['table_name']].rename(columns=rename_columns, inplace=True)
-            # Removing unwanted columns as mapped in the target domain metadata
+            #domain_dfs[table_metadata['table_name']].rename(columns={"COLLECTION_CLI_NUMBER": "collection_client_number"}, inplace=True)
+          
+          # Removing unwanted columns as mapped in the target domain metadata
             domain_dfs[table_metadata['table_name']] = domain_dfs[table_metadata['table_name']][list(columns_map)]
             domain_dfs[table_metadata['table_name']] = domain_dfs[table_metadata['table_name']].sort_values(by=table_metadata['primary_key'])
             domain_dfs[table_metadata['table_name']] = domain_dfs[table_metadata['table_name']].replace(np.nan, None)
@@ -360,7 +361,7 @@ def load_domain(track_database_conn: object,
                     target_database_conn.rollback()
                     # Marking the leading value that had an error for retry
                     entity_id = {src_leading_column: value}
-                    logger.error(f'Domain Loading ERROR - {leading_column} = {value} - Error message: {e}')
+                    logger.error(f'Domain Loading SQL ALCHEMY ERROR - {leading_column} = {value} - Error message: {e}')
                     data_sync_ctl.insert_error_record(track_database_conn, source_database_schema, domain_name, entity_id)
                 else:        
                     target_database_conn.commit()

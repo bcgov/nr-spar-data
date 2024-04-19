@@ -122,7 +122,9 @@ def main() -> None:
             # Vault disabled
             # testVault()
         else:            
-            print("Starting main process ...")
+            print("-------------------------------------")
+            print("Starting ETL main process ")
+            print("-------------------------------------")
             
             dbOracle = generate_db_config("ORACLE","THE") 
             dbPostgres = generate_db_config("POSTGRES","spar")
