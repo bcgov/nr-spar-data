@@ -311,6 +311,7 @@ def adjust_columns(domain_dfs: dict,
             domain_dfs[table_metadata['table_name']] = domain_dfs[table_metadata['table_name']][list(columns_map)]
             domain_dfs[table_metadata['table_name']] = domain_dfs[table_metadata['table_name']].sort_values(by=table_metadata['primary_key'])
             domain_dfs[table_metadata['table_name']] = domain_dfs[table_metadata['table_name']].replace(np.nan, None)
+            domain_dfs[table_metadata['table_name']] = domain_dfs[table_metadata['table_name']].replace('NaT', '') # Include it specially for data/time structures
     except Exception:
         logger.critical('Error while Adjusting and Mapping Columns', exc_info=True)
         raise TransformException
