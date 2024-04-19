@@ -174,7 +174,7 @@ def build_insert_stm(table_metadata: str) -> str:
     insert_stm = 'INSERT INTO {}.{} ('.format(table_metadata['schema'], table_metadata['table_name'])
 
     for key in columns:
-        columns_str = ''.join([columns_str, key, ','])
+        columns_str = ''.join([columns_str, table_metadata['columns'][key], ','])
         columns_values_str = ''.join([columns_values_str, ':', key, ','])
         
     insert_stm = ''.join([

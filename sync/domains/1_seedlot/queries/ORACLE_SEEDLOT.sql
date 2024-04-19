@@ -5,7 +5,7 @@ select --SYSTIMESTAMP CURRENT_TS,
 	,s.APPLICANT_CLIENT_LOCN          as applicant_locn_code
 	,s.APPROVED_TIMESTAMP
 	,s.APPROVED_USERID
-	--,NULL as area_of_use_comment 					-- NO column found in Postgres
+	--,NULL as area_of_use_comment 					-- NO column found in ORACLE
 	,s.BC_SOURCE_IND
 	,s.BEC_VERSION_ID
 	,s.BGC_SUBZONE_CODE
@@ -63,7 +63,7 @@ select --SYSTIMESTAMP CURRENT_TS,
 	,s.INTERM_STRG_CMT
 	,s.INTERM_STRG_END_DATE
 	,s.INTERM_STRG_LOCN
-	--,NULL as interm_strg_locn_code 				-- NO column found in Postgres 
+	--,NULL as interm_strg_locn_code 				-- NO column found in ORACLE 
 	,s.INTERM_STRG_ST_DATE
 	,s.LATITUDE_DEG_MAX
 	,s.LATITUDE_DEG_MIN
@@ -88,7 +88,7 @@ select --SYSTIMESTAMP CURRENT_TS,
 	,s.NAD_DATUM_CODE
 	,s.NMBR_TREES_FROM_CODE
 	,s.NO_OF_CONTAINERS
-	--, NULL as non_orchard_pollen_contam_pct 		-- NO column found in Postgres  
+	--, NULL as non_orchard_pollen_contam_pct 		-- NO column found in ORACLE  
 	,s.ORCHARD_COMMENT                  as area_of_use_comment
 	--,s.ORCHARD_CONTAMINATION_PCT  				-- NO column found in Postgres  
 	--,s.ORCHARD_ID                              	-- NO column found in Postgres  
@@ -120,9 +120,9 @@ select --SYSTIMESTAMP CURRENT_TS,
 	,s.STORED_CLI_LOCN_CD
 	,s.STORED_CLI_NUMBER
 	,s.SUPERIOR_PRVNC_IND
-	--,NULL as temporary_strg_client_number 		-- NO column found in Postgres  
+	--,NULL as temporary_strg_client_number 		-- NO column found in ORACLE  
 	,s.TEMPORARY_STORAGE_END_DATE       as temporary_strg_end_date
-	--,NULL as temporary_strg_locn_code 			-- NO column found in Postgres  
+	--,NULL as temporary_strg_locn_code 			-- NO column found in ORACLE
 	,s.TEMPORARY_STORAGE_START_DATE     as temporary_strg_start_date
 	,s.TO_BE_REGISTRD_IND
 	,s.TOTAL_PARENT_TREES	
