@@ -9,12 +9,54 @@ import module.data_sync_control as data_sync_ctl
 import transformations as transf
 
 from typing import Tuple
-from os import listdir, path
+from os import listdir, path, sep as separator
 from datetime import timedelta
 from sqlalchemy.exc import SQLAlchemyError
-from module.custom_exception import TransformException, LoadException, ExtractException
+from module.custom_exception import TransformException, LoadException, ExtractException, ETLConfigurationException
 
 logger = logging.getLogger(__name__)
+
+"""
+    Execute data synchronization between 2 data sources
+    1. Gather what process will be executed in order
+    2. Execute source.sql from process to Load data in a in-memory dataframe
+    3. Create a TEMP table in the target connection
+    4. Execute the target.sql in target connection using the TEMP table
+"""
+def data_sync2(source_config, target_config, track_config, execution_id):
+    sync_start_time = time.time()
+    logger.info('***** Starting ETL Tool *****')
+    current_cwd = path.join(path.abspath(path.dirname(__file__).split('src')[0]) , "config")
+    logger.info('Initializing Tracking Database Connection')
+    with db_conn.database_connection(track_config) as track_db_conn:
+        logger.info('Getting Execution instructions for execution id {}'.format(str(execution_id)))
+        execution_map = data_sync_ctl.get_execution_map(track_db_conn,track_config['schema'],execution_id)
+
+        logger.info('Validating Execution instructions')
+        try:
+            if not data_sync_ctl.validate_execution_map(execution_map):
+                raise ETLConfigurationException ("ETL configuration validation failed")
+            
+            processes = data_sync_ctl.get_processes_execution_map(execution_map)
+            logger.info('Initializing Source Database Connection')
+
+            # All processes to be executed from configuration in ETL_EXECUTION_MAP
+            for process in processes:
+                with db_conn.database_connection(source_config) as source_db_conn:
+                    data_sync_ctl.print_process(process)
+                    load_file = current_cwd+process['source_file'].replace("/",separator)
+                    print ("Reading Extract query from: " + load_file)
+                    query_sql = open(load_file).read()
+                    print ("Query is: "+ query_sql)
+                    table_df = pd.read_sql_query(query_sql, source_db_conn.engine)
+                    print(table_df)
+                
+        
+        # Exception when validate_execution_map is false
+        except ETLConfigurationException:
+            print("ETLConfigurationException - Impossible to determine what process will be executed (or no process to be executed)")
+            logger.critical('ETLConfigurationException - Impossible to determine what process will be executed (or no process to be executed)')
+
 
 def data_sync(source_config, target_config, track_config):
     """ 
@@ -45,38 +87,45 @@ def data_sync(source_config, target_config, track_config):
         execution_map = data_sync_ctl.get_execution_map(track_db_conn,track_db_config['schema'],0)
 
         logger.info('Validating Execution instructions')
-        data_sync_ctl.validate_execution_map(execution_map)
+        try:
+            if not data_sync_ctl.validate_execution_map(execution_map):
+                raise ETLConfigurationException ("ETL configuration validation failed")
 
-        logger.info('Initializing Source Database Connection')        
-        with db_conn.database_connection(source_db_config) as source_db_conn:
-            
-            try:
-                data_sync_id = data_sync_ctl.get_next_data_sync_id(track_db_conn, track_db_config['schema'])
-                data_sync_ctl.insert_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id)
+            logger.info('Initializing Source Database Connection')        
+            with db_conn.database_connection(source_db_config) as source_db_conn:
                 
-                logger.info('Initializing Target Database Connection')
-                with db_conn.database_connection(target_db_config) as target_db_conn:
+                try:
+                    data_sync_id = data_sync_ctl.get_next_data_sync_id(track_db_conn, track_db_config['schema'])
+                    data_sync_ctl.insert_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id)
+                    
+                    logger.info('Initializing Target Database Connection')
+                    with db_conn.database_connection(target_db_config) as target_db_conn:
 
-                    for i in domain_loading_order:
-                        domain_folder_path = path.abspath(path.join(domains_path, domains_folders[i]))
-                        domain_name = domains_folders[i].split('_', 1)[1]
-                        logger.info(f'Sync {domain_name} Domain ({i}/{len(domain_loading_order)})')
-                        sync_domain(track_db_conn, track_db_config['schema'], source_db_conn, source_db_config['schema'], target_db_conn, domain_folder_path, domain_name)
-            
-            except ExtractException:
-                data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Failed')
-                logger.critical('ExtractException - A fatal error has occurred during data extraction')
-            except TransformException:
-                data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Failed')
-                logger.critical('TransformException - A fatal error has occurred during data transformation')
-            except LoadException:
-                data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Failed')
-                logger.critical('LoadException - A fatal error has occurred during data loading')
-            except Exception:
-                data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Failed')
-                logger.critical('A fatal error has occurred', exc_info = True)
-            else:        
-                data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Completed')
+                        for i in domain_loading_order:
+                            domain_folder_path = path.abspath(path.join(domains_path, domains_folders[i]))
+                            domain_name = domains_folders[i].split('_', 1)[1]
+                            logger.info(f'Sync {domain_name} Domain ({i}/{len(domain_loading_order)})')
+                            sync_domain(track_db_conn, track_db_config['schema'], source_db_conn, source_db_config['schema'], target_db_conn, domain_folder_path, domain_name)
+                
+                except ExtractException:
+                    data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Failed')
+                    logger.critical('ExtractException - A fatal error has occurred during data extraction')
+                except TransformException:
+                    data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Failed')
+                    logger.critical('TransformException - A fatal error has occurred during data transformation')
+                except LoadException:
+                    data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Failed')
+                    logger.critical('LoadException - A fatal error has occurred during data loading')
+                except Exception:
+                    data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Failed')
+                    logger.critical('A fatal error has occurred', exc_info = True)
+                else:        
+                    data_sync_ctl.update_data_sync_control(track_db_conn, track_db_config['schema'], data_sync_id, 'Completed')
+                    
+        # Exception when validate_execution_map is false
+        except ETLConfigurationException:
+            print("ETLConfigurationException - Impossible to determine what process will be executed (or no process to be executed)")
+            logger.critical('ETLConfigurationException - Impossible to determine what process will be executed (or no process to be executed)')
     
     sync_elapsed_time = time.time() - sync_start_time
     logger.debug(f'Data Sync process took {timedelta(seconds=sync_elapsed_time)}')

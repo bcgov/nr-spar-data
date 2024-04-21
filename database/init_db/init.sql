@@ -3327,18 +3327,18 @@ where not exists (select 1 from spar.etl_execution_map where interface_id = 'ETL
 
 insert into spar.etl_execution_map(execution_id, execution_parent_id ,interface_id, source_file,source_name, source_table,
                                    target_file,target_name, target_table, truncate_before_run, execution_order )
-select 1 							as execution_id, 
-       0 							as execution_parent_id ,
-       'SEEDLOT-ORACLE-TO-POSTGRES' as interface_id, 
-       'ORACLE_SEEDLOT.sql' 	    as source_file,
-       'ORACLE THE'                 as source_name, 
-       'SEEDLOT'               	    as source_table,
-       'POSTGRES_UPSERT.sql' 		as target_file,
-       'NEW SPAR' 					as target_name, 
-       'seedlot' 					as target_table, 
-       false 						as truncate_before_run ,
-	   1 							as execution_order
-where not exists (select 1 from spar.etl_execution_map where interface_id = 'SEEDLOT-SYNC-SOURCE-ORACLE');
+select 1 										as execution_id, 
+       0 										as execution_parent_id ,
+       'SPAR-SEEDLOT-ORACLE-TO-POSTGRES' 	    as interface_id, 
+       '/SQL/SPAR/ORACLE_SEEDLOT_EXTRACT.sql'   as source_file,
+       'ORACLE THE'                 			as source_name, 
+       'SEEDLOT'               	    			as source_table,
+       '/SQL/SPAR/POSTGRES_SEEDLOT_UPSERT.sql' 	as target_file,
+       'NEW SPAR' 								as target_name, 
+       'seedlot' 								as target_table, 
+       false 									as truncate_before_run ,
+	   1 										as execution_order
+where not exists (select 1 from spar.etl_execution_map where interface_id = 'SPAR-SEEDLOT-ORACLE-TO-POSTGRES');
 
 /* Only for back compatibility */
 create table spar.data_sync_control (data_sync_id integer, status varchar, start_dt timestamp, end_dt timestamp);
