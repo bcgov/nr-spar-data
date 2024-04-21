@@ -40,8 +40,14 @@ def data_sync(source_config, target_config, track_config):
     
     logger.info('Initializing Tracking Database Connection')
     with db_conn.database_connection(track_db_config) as track_db_conn:
-    
-        logger.info('Initializing Source Database Connection')
+
+        logger.info('Getting Execution instructions')
+        execution_map = data_sync_ctl.get_execution_map(track_db_conn,track_db_config['schema'],0)
+
+        logger.info('Validating Execution instructions')
+        data_sync_ctl.validate_execution_map(execution_map)
+
+        logger.info('Initializing Source Database Connection')        
         with db_conn.database_connection(source_db_config) as source_db_conn:
             
             try:
@@ -50,6 +56,7 @@ def data_sync(source_config, target_config, track_config):
                 
                 logger.info('Initializing Target Database Connection')
                 with db_conn.database_connection(target_db_config) as target_db_conn:
+
                     for i in domain_loading_order:
                         domain_folder_path = path.abspath(path.join(domains_path, domains_folders[i]))
                         domain_name = domains_folders[i].split('_', 1)[1]
@@ -110,7 +117,7 @@ def sync_domain(track_db_conn: object,
     logger.debug(f'Transformation of {domain_name} took {timedelta(seconds=elapsed_time)}')
     
     start_time = time.time()
-    load_domain(track_db_conn,source_db_conn, source_db_schema, target_db_conn, domain_dfs, domain_name, tgt_domain_metadata, src_domain_metadata.get('leading_column'))
+    load_domain(track_db_conn,track_db_schema,source_db_conn, source_db_schema, target_db_conn, domain_dfs, domain_name, tgt_domain_metadata, src_domain_metadata.get('leading_column'))
     elapsed_time = time.time() - start_time
     logger.debug(f'Loading of {domain_name} took {timedelta(seconds=elapsed_time)}')
     
@@ -246,7 +253,7 @@ def extract_retry_records(track_db_conn: object,
     
     if data_sync_id:
         # Getting all entity ids that were marked to be retrieved
-        entities = data_sync_ctl.get_entity_id_for_retry(track_db_conn, database_schema, data_sync_id, entity_name)       
+        entities = data_sync_ctl.get_entity_id_for_retry(track_db_conn, track_schema, data_sync_id, entity_name)       
         for entity_id in entities:
             # Retrieving data for each entity id, one at a time
             df = pd.read_sql(retry_records_qry, database_conn.engine, params=entity_id)
@@ -319,6 +326,7 @@ def adjust_columns(domain_dfs: dict,
         return domain_dfs
 
 def load_domain(track_database_conn: object,
+                track_database_schema: str,
                 source_database_conn: object,
                 source_database_schema: str,
                 target_database_conn: object,
@@ -363,7 +371,7 @@ def load_domain(track_database_conn: object,
                     # Marking the leading value that had an error for retry
                     entity_id = {src_leading_column: value}
                     logger.error(f'Domain Loading SQL ALCHEMY ERROR - {leading_column} = {value} - Error message: {e}')
-                    data_sync_ctl.insert_error_record(track_database_conn, source_database_schema, domain_name, entity_id)
+                    data_sync_ctl.insert_error_record(track_database_conn, track_database_schema, domain_name, entity_id)
                 else:        
                     target_database_conn.commit()
             else:

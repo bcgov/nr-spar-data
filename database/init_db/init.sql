@@ -3284,22 +3284,7 @@ SET search_path = pg_catalog, spar;
 ----- ETL Tool Changes for PoC
 */
 
-/* 
--- DML for Generic interface_id for generic running
-*/
-insert into spar.etl_execution_map
-select 'ETL-RUN' as interface_id, 
-       null as source_file, 
-       'MAIN PROCESS' as source_name, 
-       null as source_table, 
-       null as target_file, 
-       'MAIN PROCESS' as target_name,
-       null as target_table,
-       false as truncate_before_run,
-       NOW() updated_at,
-       NOW() created_at
-where not exists (select 1 from spar.etl_execution_map where interface_id = 'ETL-RUN');
-
+/* DDL */
 /* 
 -- Tracking change for ETL execution 
 */
@@ -3308,42 +3293,53 @@ ALTER TABLE spar.etl_execution_log_hist
   add column execution_finished_at  timestamp;
 
 /* 
--- PROCESS AND PARENT/CHILD PROCESS
+-- PROCESS AND PARENT/CHILD PROCESS AND ORDER
 */  
 alter table spar.etl_execution_map  add column execution_id integer;
 alter table spar.etl_execution_map  add column execution_parent_id integer;
+alter table spar.etl_execution_map  add column execution_order integer;
+alter table spar.etl_execution_map  add column group_executor boolean default false;
+
+
+/* 
+-- DML for Generic interface_id for generic running
+*/
+
 
 /* 
 -- INCLUDING MAIN RUN and SEEDLOT SYNC FROM ORACLE
 */  
 insert into spar.etl_execution_map(execution_id, execution_parent_id ,interface_id, source_file,source_name, source_table,
-                                   target_file,target_name, target_table, truncate_before_run )
-select 0 as execution_id, 
-       null as execution_parent_id ,
-       'ETL-RUN' as interface_id, 
-       null as source_file,
-       'MAIN PROCESS' as source_name, 
-       null as source_table,
-       null as target_file,
-       'MAIN PROCESS' as target_name, 
-       null as target_table, 
-       false as truncate_before_run 
+                                   target_file,target_name, target_table, truncate_before_run , execution_order, group_executor)
+select 0 				as execution_id, 
+       null 			as execution_parent_id ,
+       'ETL-RUN' 		as interface_id, 
+       null 			as source_file,
+       'MAIN PROCESS FROM ORACLE' 	as source_name, 
+       null 			as source_table,
+       null 			as target_file,
+       'MAIN PROCESS TO POSTGRES' 	as target_name, 
+       null 			as target_table, 
+       false 			as truncate_before_run ,
+	   0 				as execution_order,
+	   true             as group_executor
 where not exists (select 1 from spar.etl_execution_map where interface_id = 'ETL-RUN');
 
 insert into spar.etl_execution_map(execution_id, execution_parent_id ,interface_id, source_file,source_name, source_table,
-                                   target_file,target_name, target_table, truncate_before_run )
-select 1 as execution_id, 
-       0 as execution_parent_id ,
-       'SEEDLOT-SYNC-SOURCE-ORACLE' as interface_id, 
-       '' as source_file,
-       'NEW SPAR' as source_name, 
-       'spar.seedlot' as source_table,
-       '' as target_file,
-       'ORACLE THE' as target_name, 
-       'seedlot' as target_table, 
-       false as truncate_before_run 
+                                   target_file,target_name, target_table, truncate_before_run, execution_order )
+select 1 							as execution_id, 
+       0 							as execution_parent_id ,
+       'SEEDLOT-ORACLE-TO-POSTGRES' as interface_id, 
+       'ORACLE_SEEDLOT.sql' 	    as source_file,
+       'ORACLE THE'                 as source_name, 
+       'SEEDLOT'               	    as source_table,
+       'POSTGRES_UPSERT.sql' 		as target_file,
+       'NEW SPAR' 					as target_name, 
+       'seedlot' 					as target_table, 
+       false 						as truncate_before_run ,
+	   1 							as execution_order
 where not exists (select 1 from spar.etl_execution_map where interface_id = 'SEEDLOT-SYNC-SOURCE-ORACLE');
 
-
+/* Only for back compatibility */
 create table spar.data_sync_control (data_sync_id integer, status varchar, start_dt timestamp, end_dt timestamp);
 create table spar.data_sync_error (data_sync_id integer, entity_name varchar(100), entity_id varchar(100));

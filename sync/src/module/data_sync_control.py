@@ -1,5 +1,65 @@
 import ast
 from datetime import datetime
+from pandas import DataFrame
+
+"""
+    Gets the Execution map data from this execution
+
+    Args:
+        database_conn (object): Database connection to monitoring DB
+        database_schema (str): Database schema of monitoring DB
+
+    Returns:
+        list of dict: All executions to be processed
+    """
+def get_execution_map (track_db_conn: object, 
+                       database_schema: str,
+                       execution_id: int) -> list:
+    
+    select_sync_id_stm = "select interface_id , execution_id, execution_order, group_executor, execution_order, \
+                              source_name, source_file, source_table, \
+                              target_name, target_file, target_table, \
+                              truncate_before_run, case when group_executor then 'ORCHESTRATION' else 'PROCESS' end as process_type \
+                              from {}.etl_execution_map \
+                              where (execution_id = {} or execution_parent_id = {} )  and execution_order >= 0 \
+                              order by group_executor desc, execution_order".format(database_schema,execution_id,execution_id)
+                        
+    records = track_db_conn.select(select_sync_id_stm)
+        
+    return records.mappings().all()
+
+
+"""
+    Validate if the Execution map data is correct
+
+    Args:
+        database_conn (object): Database connection to monitoring DB
+        database_schema (str): Database schema of monitoring DB
+
+    Returns:
+        list 
+"""
+def validate_execution_map (execution_map) -> bool:
+    ret = True
+    exist_process = False
+    print("-- Validating the execution process to be executed")
+    for row in execution_map:
+        if row["group_executor"]:
+            print("-- Executing group executor: " + row["interface_id"])
+        else:
+            exist_process = True
+            if row["source_file"] == "":
+                print("[EXECUTION MAP ERROR] Source file does not exist in Interface Id " + row["interface_id"])
+                ret = False
+            if row["target_file"] == "":
+                print("[EXECUTION MAP ERROR] Target file does not exist in Interface Id " + row["interface_id"])
+                ret = False
+            if row["truncate_before_run"] and row["target_table"]=="":
+                print("[EXECUTION MAP ERROR] Target table is not filled for truncate statement in Interface Id" + row["interface_id"])
+                ret = False
+        
+    return (ret and exist_process)
+    
        
 def get_running_data_sync_id(database_conn: object, 
                              database_schema: str) -> int:

@@ -109,9 +109,11 @@ def testVault():
 
 def main() -> None:
     definitiion_of_yes = ["Y","YES","1","T","TRUE"]
-    print(os.environ.get("test_mode"))
+    # print(os.environ.get("test_mode"))
     if os.environ.get("test_mode") is None:
         print("Error: test mode variable is None")
+    elif os.environ.get("EXECUTION_ID") is None:
+        print("Error: EXECUTION_ID is None, no execution defined to be executed in this run.")
     else:
         this_is_a_test = os.environ.get("test_mode")
         if this_is_a_test in definitiion_of_yes:
