@@ -7,7 +7,9 @@ import module.metadata_handler as meta
 import module.database_connection as db_conn
 import module.data_sync_control as data_sync_ctl
 import transformations as transf
+import csv
 
+from io import StringIO
 from typing import Tuple
 from os import listdir, path, sep as separator
 from datetime import timedelta
@@ -15,6 +17,36 @@ from sqlalchemy.exc import SQLAlchemyError
 from module.custom_exception import TransformException, LoadException, ExtractException, ETLConfigurationException
 
 logger = logging.getLogger(__name__)
+
+def psql_insert_copy(table, conn, keys, data_iter):
+    """
+    Execute SQL statement inserting data
+
+    Parameters
+    ----------
+    table : pandas.io.sql.SQLTable
+    conn : sqlalchemy.engine.Engine or sqlalchemy.engine.Connection
+    keys : list of str
+        Column names
+    data_iter : Iterable that iterates the values to be inserted
+    """
+    # gets a DBAPI connection that can provide a cursor
+    dbapi_conn = conn.connection
+    with dbapi_conn.cursor() as cur:
+        s_buf = StringIO()
+        writer = csv.writer(s_buf)
+        writer.writerows(data_iter)
+        s_buf.seek(0)
+
+        columns = ', '.join('"{}"'.format(k) for k in keys)
+        if table.schema:
+            table_name = '{}.{}'.format(table.schema, table.name)
+        else:
+            table_name = table.name
+
+        sql = 'COPY {} ({}) FROM STDIN WITH CSV'.format(
+            table_name, columns)
+        cur.copy_expert(sql=sql, file=s_buf)
 
 """
     Execute data synchronization between 2 data sources
@@ -50,6 +82,20 @@ def data_sync2(source_config, target_config, track_config, execution_id):
                     print ("Query is: "+ query_sql)
                     table_df = pd.read_sql_query(query_sql, source_db_conn.engine)
                     print(table_df)
+
+                    with db_conn.database_connection(target_config) as target_db_conn:
+                        temp_table = "TMP_"+process["interface_id"].replace("-","")
+                        temp_table = '"{}"'.format(temp_table)
+                        print("Temp table is {} ".format(temp_table))
+                        target_db_conn.create_temp_table(temp_table,process["target_table"],True)
+                        query_sql = "SELECT * FROM {}".format(temp_table)
+                        target_df = pd.read_sql_query(query_sql, target_db_conn.engine)
+                        
+                        table_df.to_sql(name=temp_table,con=target_db_conn.engine,if_exists="append", index=False, method=psql_insert_copy)
+                        # READ FROM TEMP TABLE:
+                        query_sql = "SELECT * FROM {}".format(temp_table)
+                        target_df = pd.read_sql_query(query_sql, target_db_conn.engine)
+                        print(target_df)
                 
         
         # Exception when validate_execution_map is false

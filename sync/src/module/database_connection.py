@@ -55,7 +55,7 @@ class database_connection(object):
     def rollback(self):
         """ Runs a SQL statement. """
         self.conn.rollback()
-        
+     
     def get_oracle_engine(self):
         import ssl
         import oracledb
@@ -86,3 +86,12 @@ class database_connection(object):
                 database_config['database'])
 
         return connection_string
+    
+    def create_temp_table(self, table_name:str, from_what_table:str, only_structure:bool):
+        complement = ""
+        if only_structure:
+            complement = " WHERE 1=2"
+
+        query = "CREATE TEMP TABLE {} as SELECT * FROM {} {}".format(table_name,from_what_table,complement)
+        print("TEMP TABLE {} created: {}".format(table_name, query) )
+        self.conn.execute(text(query), None)

@@ -3335,7 +3335,7 @@ select 1 										as execution_id,
        'SEEDLOT'               	    			as source_table,
        '/SQL/SPAR/POSTGRES_SEEDLOT_UPSERT.sql' 	as target_file,
        'NEW SPAR' 								as target_name, 
-       'seedlot' 								as target_table, 
+       'spar.seedlot' 								as target_table, 
        false 									as truncate_before_run ,
 	   1 										as execution_order
 where not exists (select 1 from spar.etl_execution_map where interface_id = 'SPAR-SEEDLOT-ORACLE-TO-POSTGRES');
