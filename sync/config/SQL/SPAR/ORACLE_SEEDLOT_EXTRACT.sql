@@ -131,5 +131,5 @@ select --SYSTIMESTAMP CURRENT_TS,
 	,s.VARIANT                                          
 	,s.VEGETATION_CODE
 	,s.VOL_PER_CONTAINER
-from seedlot s 
---WHERE ROWNUM < 10
+FROM seedlot s 
+ --WHERE ROWNUM < 10

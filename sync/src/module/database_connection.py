@@ -101,6 +101,19 @@ class database_connection(object):
 
 
     def bulk_upsert(self, dataframe:object, table_name:str, if_data_exists: str, index_data:bool ) -> int:
+        df2 = dataframe.drop(columns=["seedlot_number"])
+        sql_text = f"""         
+        INSERT INTO {table_name}({', '.join(dataframe.columns.values)})                
+        VALUES(:{', :'.join(dataframe.columns.values)})                
+        ON CONFLICT (seedlot_number)               
+        DO UPDATE SET {' , '.join(df2.columns.values + '= EXCLUDED.'+df2.columns.values)}         """
+        print ("UPSERT statement to be executed: ")
+        print (sql_text)
+        result = self.conn.execute(text(sql_text), dataframe.to_dict('records'))
+        return result.rowcount
+        #return dataframe.to_sql(name=table_name,con=self.conn.engine,if_exists=if_data_exists, index=index_data, method=psql_insert_copy)
+    
+    def bulk_upsert2(self, dataframe:object, table_name:str, if_data_exists: str, index_data:bool ) -> int:
         return dataframe.to_sql(name=table_name,con=self.conn.engine,if_exists=if_data_exists, index=index_data, method=psql_insert_copy)
 
 def psql_insert_copy(table, conn, keys, data_iter):
