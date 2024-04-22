@@ -7,9 +7,7 @@ import module.metadata_handler as meta
 import module.database_connection as db_conn
 import module.data_sync_control as data_sync_ctl
 import transformations as transf
-import csv
 
-from io import StringIO
 from typing import Tuple
 from os import listdir, path, sep as separator
 from datetime import timedelta
@@ -17,36 +15,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from module.custom_exception import TransformException, LoadException, ExtractException, ETLConfigurationException
 
 logger = logging.getLogger(__name__)
-
-def psql_insert_copy(table, conn, keys, data_iter):
-    """
-    Execute SQL statement inserting data
-
-    Parameters
-    ----------
-    table : pandas.io.sql.SQLTable
-    conn : sqlalchemy.engine.Engine or sqlalchemy.engine.Connection
-    keys : list of str
-        Column names
-    data_iter : Iterable that iterates the values to be inserted
-    """
-    # gets a DBAPI connection that can provide a cursor
-    dbapi_conn = conn.connection
-    with dbapi_conn.cursor() as cur:
-        s_buf = StringIO()
-        writer = csv.writer(s_buf)
-        writer.writerows(data_iter)
-        s_buf.seek(0)
-
-        columns = ', '.join('"{}"'.format(k) for k in keys)
-        if table.schema:
-            table_name = '{}.{}'.format(table.schema, table.name)
-        else:
-            table_name = table.name
-
-        sql = 'COPY {} ({}) FROM STDIN WITH CSV'.format(
-            table_name, columns)
-        cur.copy_expert(sql=sql, file=s_buf)
 
 """
     Execute data synchronization between 2 data sources
@@ -79,21 +47,20 @@ def data_sync2(source_config, target_config, track_config, execution_id):
                     load_file = current_cwd+process['source_file'].replace("/",separator)
                     print ("Reading Extract query from: " + load_file)
                     query_sql = open(load_file).read()
-                    print ("Query is: "+ query_sql)
+                    # print ("Query is: "+ query_sql)
                     table_df = pd.read_sql_query(query_sql, source_db_conn.engine)
                     print(table_df)
 
                     with db_conn.database_connection(target_config) as target_db_conn:
-                        temp_table = "TMP_"+process["interface_id"].replace("-","")
-                        temp_table = '"{}"'.format(temp_table)
-                        print("Temp table is {} ".format(temp_table))
-                        target_db_conn.create_temp_table(temp_table,process["target_table"],True)
-                        query_sql = "SELECT * FROM {}".format(temp_table)
-                        target_df = pd.read_sql_query(query_sql, target_db_conn.engine)
-                        
-                        table_df.to_sql(name=temp_table,con=target_db_conn.engine,if_exists="append", index=False, method=psql_insert_copy)
+                        #table_df['collection_elevation']=table_df['collection_elevation'].astype(int)
+                        table_df=table_df.convert_dtypes()
+                        #table_df=table_df.fillna("").astype("string")
+                        #table_df[['seed_plan_unit_id']] = table_df[['seed_plan_unit_id']].astype(int,errors="ignore").fillna("")
+                        #table_df.to_numeric(table_df["collection_elevation"], downcast='integer')
+                        rows_affected = target_db_conn.bulk_upsert(dataframe=table_df, table_name=process["target_table"], 
+                                                                   if_data_exists="append", index_data=False )
                         # READ FROM TEMP TABLE:
-                        query_sql = "SELECT * FROM {}".format(temp_table)
+                        query_sql = "SELECT * FROM {}".format(process["target_table"])
                         target_df = pd.read_sql_query(query_sql, target_db_conn.engine)
                         print(target_df)
                 
@@ -102,7 +69,9 @@ def data_sync2(source_config, target_config, track_config, execution_id):
         except ETLConfigurationException:
             print("ETLConfigurationException - Impossible to determine what process will be executed (or no process to be executed)")
             logger.critical('ETLConfigurationException - Impossible to determine what process will be executed (or no process to be executed)')
-
+    sync_elapsed_time = time.time() - sync_start_time
+    logger.debug(f'Data Sync process took {timedelta(seconds=sync_elapsed_time)}')
+    logger.info('***** Finish Data Sync *****')
 
 def data_sync(source_config, target_config, track_config):
     """ 

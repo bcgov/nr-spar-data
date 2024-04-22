@@ -1,6 +1,9 @@
 import logging
 #import cx_Oracle
 import oracledb
+import csv
+
+from io import StringIO
 from sqlalchemy import create_engine, text
 
 logger = logging.getLogger(__name__)
@@ -95,3 +98,37 @@ class database_connection(object):
         query = "CREATE TEMP TABLE {} as SELECT * FROM {} {}".format(table_name,from_what_table,complement)
         print("TEMP TABLE {} created: {}".format(table_name, query) )
         self.conn.execute(text(query), None)
+
+
+    def bulk_upsert(self, dataframe:object, table_name:str, if_data_exists: str, index_data:bool ) -> int:
+        return dataframe.to_sql(name=table_name,con=self.conn.engine,if_exists=if_data_exists, index=index_data, method=psql_insert_copy)
+
+def psql_insert_copy(table, conn, keys, data_iter):
+    """
+    Execute SQL statement inserting data
+
+    Parameters
+    ----------
+    table : pandas.io.sql.SQLTable
+    conn : sqlalchemy.engine.Engine or sqlalchemy.engine.Connection
+    keys : list of str
+        Column names
+    data_iter : Iterable that iterates the values to be inserted
+    """
+    # gets a DBAPI connection that can provide a cursor
+    #from psycopg2 import sql
+    dbapi_conn = conn.connection
+    with dbapi_conn.cursor() as cur:
+        s_buf = StringIO()
+        writer = csv.writer(s_buf)
+        writer.writerows(data_iter)
+        s_buf.seek(0)
+
+        columns = ', '.join('"{}"'.format(k) for k in keys)
+        if table.schema:
+            table_name = '{}.{}'.format(table.schema, table.name)
+        else:
+            table_name = table.name
+
+        sql_text = 'COPY {} ({}) FROM STDIN WITH CSV'.format(table_name, columns)
+        cur.copy_expert(sql=sql_text, file=s_buf)
