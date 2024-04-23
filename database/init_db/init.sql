@@ -3299,7 +3299,7 @@ alter table spar.etl_execution_map  add column execution_id integer;
 alter table spar.etl_execution_map  add column execution_parent_id integer;
 alter table spar.etl_execution_map  add column execution_order integer;
 alter table spar.etl_execution_map  add column group_executor boolean default false;
-
+alter table spar.etl_execution_map  add column target_primary_key varchar(200);
 
 /* 
 -- DML for Generic interface_id for generic running
@@ -3310,7 +3310,7 @@ alter table spar.etl_execution_map  add column group_executor boolean default fa
 -- INCLUDING MAIN RUN and SEEDLOT SYNC FROM ORACLE
 */  
 insert into spar.etl_execution_map(execution_id, execution_parent_id ,interface_id, source_file,source_name, source_table,
-                                   target_file,target_name, target_table, truncate_before_run , execution_order, group_executor)
+                                   target_file,target_name, target_table,target_primary_key, truncate_before_run , execution_order, group_executor)
 select 0 				as execution_id, 
        null 			as execution_parent_id ,
        'ETL-RUN' 		as interface_id, 
@@ -3320,13 +3320,14 @@ select 0 				as execution_id,
        null 			as target_file,
        'MAIN PROCESS TO POSTGRES' 	as target_name, 
        null 			as target_table, 
+       null 			as target_primary_key, 
        false 			as truncate_before_run ,
 	   0 				as execution_order,
 	   true             as group_executor
 where not exists (select 1 from spar.etl_execution_map where interface_id = 'ETL-RUN');
 
 insert into spar.etl_execution_map(execution_id, execution_parent_id ,interface_id, source_file,source_name, source_table,
-                                   target_file,target_name, target_table, truncate_before_run, execution_order )
+                                   target_file,target_name, target_table,target_primary_key, truncate_before_run, execution_order )
 select 1 										as execution_id, 
        0 										as execution_parent_id ,
        'SPAR-SEEDLOT-ORACLE-TO-POSTGRES' 	    as interface_id, 
@@ -3335,7 +3336,8 @@ select 1 										as execution_id,
        'SEEDLOT'               	    			as source_table,
        '/SQL/SPAR/POSTGRES_SEEDLOT_UPSERT.sql' 	as target_file,
        'NEW SPAR' 								as target_name, 
-       'spar.seedlot' 								as target_table, 
+       'spar.seedlot' 							as target_table, 
+       'seedlot_number' 						as target_primary_key, 
        false 									as truncate_before_run ,
 	   1 										as execution_order
 where not exists (select 1 from spar.etl_execution_map where interface_id = 'SPAR-SEEDLOT-ORACLE-TO-POSTGRES');

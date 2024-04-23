@@ -65,7 +65,6 @@ class database_connection(object):
         dbc = self.database_config # alias
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
         ssl_context.set_ciphers('DEFAULT@SECLEVEL=1')
-        #connection = oracledb.connect(user=dbc['username'], password=dbc['password'],dsn=f"(DESCRIPTION=(ADDRESS=(PROTOCOL=TCPS)(HOST={dbc['host']})(PORT={dbc['port']}))(CONNECT_DATA=(SERVICE_NAME={dbc['service_name']})))",externalauth=False, ssl_context = ssl_context)
         return create_engine(f'oracle+oracledb://:@',
                         connect_args={
                             "user": dbc['username'],
@@ -100,20 +99,25 @@ class database_connection(object):
         self.conn.execute(text(query), None)
 
 
-    def bulk_upsert(self, dataframe:object, table_name:str, if_data_exists: str, index_data:bool ) -> int:
-        df2 = dataframe.drop(columns=["seedlot_number"])
+    def bulk_upsert(self, dataframe:object, table_name:str, table_pk:str, if_data_exists: str, index_data:bool ) -> int:
+        onconflictstatement = ""
+        if table_pk != "":
+            columnspk = table_pk.split(",")
+            df2 = dataframe.drop(columns=columnspk)  # Remove table PK from the column lists for SET operation   
+            onconflictstatement = f"""
+            ON CONFLICT ({table_pk})               
+            DO UPDATE SET {' , '.join(df2.columns.values + '= EXCLUDED.'+df2.columns.values)} """
+       
         sql_text = f"""         
         INSERT INTO {table_name}({', '.join(dataframe.columns.values)})                
         VALUES(:{', :'.join(dataframe.columns.values)})                
-        ON CONFLICT (seedlot_number)               
-        DO UPDATE SET {' , '.join(df2.columns.values + '= EXCLUDED.'+df2.columns.values)}         """
-        print ("UPSERT statement to be executed: ")
-        print (sql_text)
+        {onconflictstatement}"""
+        
         result = self.conn.execute(text(sql_text), dataframe.to_dict('records'))
-        return result.rowcount
-        #return dataframe.to_sql(name=table_name,con=self.conn.engine,if_exists=if_data_exists, index=index_data, method=psql_insert_copy)
+        self.commit()  # If everything is ok, a commit will be executed.
+        return result.rowcount  # Number of rows affected
     
-    def bulk_upsert2(self, dataframe:object, table_name:str, if_data_exists: str, index_data:bool ) -> int:
+    def bulk_load(self, dataframe:object, table_name:str, if_data_exists: str, index_data:bool ) -> int:
         return dataframe.to_sql(name=table_name,con=self.conn.engine,if_exists=if_data_exists, index=index_data, method=psql_insert_copy)
 
 def psql_insert_copy(table, conn, keys, data_iter):

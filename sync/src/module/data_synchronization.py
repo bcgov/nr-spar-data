@@ -25,10 +25,19 @@ logger = logging.getLogger(__name__)
 """
 def data_sync2(source_config, target_config, track_config, execution_id):
     sync_start_time = time.time()
+    rows_from_source = 0
+    rows_target_processed = 0
+    time_conn_monitor = ""
+    time_conn_source = ""
+    time_conn_target = ""
+    time_source_extract = ""
+    time_target_load = ""
     logger.info('***** Starting ETL Tool *****')
     current_cwd = path.join(path.abspath(path.dirname(__file__).split('src')[0]) , "config")
     logger.info('Initializing Tracking Database Connection')
     with db_conn.database_connection(track_config) as track_db_conn:
+        temp_time = time.time()
+        time_conn_monitor = timedelta(seconds=(temp_time-sync_start_time))
         logger.info('Getting Execution instructions for execution id {}'.format(str(execution_id)))
         execution_map = data_sync_ctl.get_execution_map(track_db_conn,track_config['schema'],execution_id)
 
@@ -43,34 +52,44 @@ def data_sync2(source_config, target_config, track_config, execution_id):
             # All processes to be executed from configuration in ETL_EXECUTION_MAP
             for process in processes:
                 with db_conn.database_connection(source_config) as source_db_conn:
+                    time_conn_source = timedelta(seconds=(time.time()-temp_time))
+                    temp_time = time.time()
+
                     data_sync_ctl.print_process(process)
                     load_file = current_cwd+process['source_file'].replace("/",separator)
                     print ("Reading Extract query from: " + load_file)
                     query_sql = open(load_file).read()
                     # print ("Query is: "+ query_sql)
                     table_df = pd.read_sql_query(query_sql, source_db_conn.engine)
-                    print(table_df)
+                    
+                    time_source_extract = timedelta(seconds=(time.time()-temp_time))
+                    rows_from_source = table_df.shape[0]
+                    temp_time = time.time()
 
                     with db_conn.database_connection(target_config) as target_db_conn:
-                        #table_df['collection_elevation']=table_df['collection_elevation'].astype(int)
+                        time_conn_target = timedelta(seconds=(time.time()-temp_time))
+                        temp_time = time.time()
+                        
                         table_df=table_df.convert_dtypes()
-                        #table_df=table_df.fillna("").astype("string")
-                        #table_df[['seed_plan_unit_id']] = table_df[['seed_plan_unit_id']].astype(int,errors="ignore").fillna("")
-                        #table_df.to_numeric(table_df["collection_elevation"], downcast='integer')
-                        rows_affected = target_db_conn.bulk_upsert(dataframe=table_df, table_name=process["target_table"], 
+                        
+                        rows_target_processed = target_db_conn.bulk_upsert(dataframe=table_df, table_name=process["target_table"],
+                                                                   table_pk=process["target_primary_key"], 
                                                                    if_data_exists="append", index_data=False )
                         # READ FROM TEMP TABLE:
-                        query_sql = "SELECT * FROM {}".format(process["target_table"])
-                        target_df = pd.read_sql_query(query_sql, target_db_conn.engine)
-                        print(target_df)
-                
+                        time_target_load = timedelta(seconds=(time.time()-temp_time))
+                        
         
         # Exception when validate_execution_map is false
         except ETLConfigurationException:
             print("ETLConfigurationException - Impossible to determine what process will be executed (or no process to be executed)")
             logger.critical('ETLConfigurationException - Impossible to determine what process will be executed (or no process to be executed)')
     sync_elapsed_time = time.time() - sync_start_time
-    logger.debug(f'Data Sync process took {timedelta(seconds=sync_elapsed_time)}')
+    logger.debug(f'ETL Tool whole process took {timedelta(seconds=sync_elapsed_time)}')
+    logger.debug(f'ETL Tool monitoring database connection took {time_conn_monitor}')
+    logger.debug(f'ETL Tool source database connection took {time_conn_source}')
+    logger.debug(f'ETL Tool source extract data took {time_source_extract} gathering {rows_from_source} rows')
+    logger.debug(f'ETL Tool target database connection took {time_conn_target}')
+    logger.debug(f'ETL Tool target load data took {time_target_load} processing {rows_target_processed} rows')
     logger.info('***** Finish Data Sync *****')
 
 def data_sync(source_config, target_config, track_config):
