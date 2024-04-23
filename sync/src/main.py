@@ -108,7 +108,7 @@ def testVault():
         print("Vault cannot be reached as required variables are not correctly informed")
 
 def main() -> None:
-    definitiion_of_yes = ["Y","YES","1","T","TRUE"]
+    definition_of_yes = ["Y","YES","1","T","TRUE"]
     # print(os.environ.get("test_mode"))
     if os.environ.get("test_mode") is None:
         print("Error: test mode variable is None")
@@ -116,7 +116,7 @@ def main() -> None:
         print("Error: EXECUTION_ID is None, no execution defined to be executed in this run.")
     else:
         this_is_a_test = os.environ.get("test_mode")
-        if this_is_a_test in definitiion_of_yes:
+        if this_is_a_test in definition_of_yes:
             print("Executing in Test mode")
             required_variables_exists()
             testPostgresConnection()
