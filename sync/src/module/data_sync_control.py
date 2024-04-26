@@ -69,10 +69,10 @@ def validate_execution_map (execution_map) -> bool:
                 print("[EXECUTION MAP ERROR] Target file does not exist in Interface Id " + row["interface_id"])
                 ret = False
             if row["truncate_before_run"] and row["target_table"]=="":
-                print("[EXECUTION MAP ERROR] Target table is not filled for truncate statement in Interface Id" + row["interface_id"])
+                print(f"[EXECUTION MAP ERROR] Target table is not filled for truncate statement in Interface Id {row["interface_id"]}" )
                 ret = False
             if row["target_db_type"]=="ORACLE" and row["truncate_before_run"] :
-                print("[EXECUTION MAP ERROR] Truncate command is not allowed on Oracle as target database. Update this parameter in Interface Id" + row["interface_id"])
+                print(f"[EXECUTION MAP ERROR] Truncate command is not allowed on Oracle as target database. Update this parameter in Interface Id {row["interface_id"]}")
                 ret = False
     return (ret and exist_process)
 
