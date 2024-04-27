@@ -44,9 +44,9 @@ def validate_execution_map (execution_map) -> bool:
     exist_process = False
     print("-- Validating the execution process to be executed")
     for row in execution_map:
-        if row["group_executor"]:
+        if row["process_type"]=="ORCHESTRATION":
             print("--------------------------")
-            print("-- Executing group executor: " + row["interface_id"])
+            print("-- Executing Orchestration for group executor: " + row["interface_id"])
             print("--------------------------")
         else:
             exist_process = True
