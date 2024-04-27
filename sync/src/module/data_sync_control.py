@@ -16,13 +16,16 @@ def get_execution_map (track_db_conn: object,
                        database_schema: str,
                        execution_id: int) -> list:
     
-    select_sync_id_stm = "select interface_id , execution_id, execution_order, group_executor,  \
-                              source_name, source_file, source_table, source_db_type, \
-                              target_name, target_file, target_table, target_db_type, target_primary_key, \
-                              truncate_before_run, case when group_executor then 'ORCHESTRATION' else 'PROCESS' end as process_type \
-                              from {}.etl_execution_map \
-                              where (execution_id = {} or execution_parent_id = {} )  and execution_order >= 0 \
-                              order by group_executor desc, execution_order".format(database_schema,execution_id,execution_id)
+    select_sync_id_stm = f"""
+       select interface_id , execution_id, execution_order,
+              source_name, source_file, source_table,source_db_type,
+              target_name, target_file, target_table,target_primary_key,target_db_type,
+              truncate_before_run,
+              case when execution_parent_id is null then 'ORCHESTRATION' else 'PROCESS' end as process_type
+        from  {database_schema}.etl_execution_map
+        where (execution_id = {execution_id} or execution_parent_id = {execution_id})
+              and execution_order >= 0
+        order by process_type , execution_order"""    
     records = track_db_conn.select(select_sync_id_stm)        
     return records.mappings().all()
 

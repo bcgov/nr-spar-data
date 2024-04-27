@@ -2909,6 +2909,8 @@ comment on column spar.ETL_EXECUTION_LOG_HIST.current_run_ts             is 'Cur
 comment on column spar.ETL_EXECUTION_LOG_HIST.execution_details          is 'Reference text of this interface instance execution'; 
 comment on column spar.ETL_EXECUTION_LOG_HIST.updated_at                 is 'Timestamp of the last time this record was updated'; 
 comment on column spar.ETL_EXECUTION_LOG_HIST.created_at                 is 'Timestamp of the time this record was created'; 
+
+
 alter table spar.seedlot
   add column approved_timestamp     timestamp,
   add column approved_userid        varchar(30);
@@ -3281,8 +3283,89 @@ SET search_path = pg_catalog, spar;
 
 
 /* 
------ ETL Tool Changes for PoC
+----- ETL Tool Changes after PoC
 */
+
+DROP TABLE IF EXISTS spar.ETL_EXECUTION_MAP;
+DROP TABLE IF EXISTS spar.ETL_EXECUTION_LOG;
+DROP TABLE IF EXISTS spar.ETL_EXECUTION_LOG_HIST;
+
+create table if not exists spar.ETL_EXECUTION_MAP(
+interface_id varchar(100) not null,
+execution_id integer not null;
+execution_parent_id integer;
+execution_order integer;
+source_file varchar(200),
+source_db_type varchar(200),
+source_name varchar(100),
+source_table varchar(100),
+target_file varchar(200),
+target_db_type varchar(200),
+target_name varchar(100),
+target_table varchar(100),
+target_primary_key varchar(100),
+truncate_before_run boolean default false not null,
+updated_at  timestamp   default now() not null,
+created_at  timestamp   default now() not null,
+constraint etl_execution_map_pk
+    primary key (interface_id,execution_id)
+);
+
+comment on table spar.ETL_EXECUTION_MAP is 'ETL Tool monitoring table to store execution details of batch processing interfaces';
+comment on column spar.ETL_EXECUTION_MAP.interface_id               is 'Unique interface name to represent a batch execution. Part of the composite PK, with execution_id column.';
+comment on column spar.ETL_EXECUTION_MAP.execution_id               is 'Execution ID number to represent a instance of interface_id. Part of the composite PK, with interface_id column.';
+comment on column spar.ETL_EXECUTION_MAP.execution_parent_id        is 'Reference to a parent execution ID that groups one or more execution_id in a batch run. If null, then this execution_id is a parent.';
+comment on column spar.ETL_EXECUTION_MAP.execution_order            is 'Order of execution of this instance in a collection of same execution_parent_id. Execution runs in ascending order. If it is less than 0, it will not run.';
+comment on column spar.ETL_EXECUTION_MAP.source_file                is 'Source instruction file for batch execution'; 
+comment on column spar.ETL_EXECUTION_MAP.source_db_type             is 'Database type of the source connection. Expected ORACLE or POSTGRES.'; 
+comment on column spar.ETL_EXECUTION_MAP.source_name                is 'Source name of this batch execution'; 
+comment on column spar.ETL_EXECUTION_MAP.source_table               is 'Source table (if it is a single table) of this batch execution';
+comment on column spar.ETL_EXECUTION_MAP.target_file                is 'Target instruction file for batch execution'; 
+comment on column spar.ETL_EXECUTION_MAP.target_db_type             is 'Database type of the target connection. Expected ORACLE or POSTGRES.'; 
+comment on column spar.ETL_EXECUTION_MAP.target_name                is 'Target name of this batch execution'; 
+comment on column spar.ETL_EXECUTION_MAP.target_table               is 'Target table (if it is a single table) of this batch execution'; 
+comment on column spar.ETL_EXECUTION_MAP.target_primary_key         is 'Primary key of the target table of this batch execution'; 
+comment on column spar.ETL_EXECUTION_MAP.truncate_before_run        is 'If the target table should be truncated before the batch execution'; 
+comment on column spar.ETL_EXECUTION_MAP.updated_at                 is 'Timestamp of the last time this record was updated'; 
+comment on column spar.ETL_EXECUTION_MAP.created_at                 is 'Timestamp of the time this record was created'; 
+
+
+create table spar.ETL_EXECUTION_LOG(
+interface_id varchar(100) not null,
+execution_id 
+last_run_ts timestamp,
+current_run_ts timestamp,
+updated_at  timestamp   default now() not null,
+created_at  timestamp   default now() not null
+);
+
+
+comment on table spar.ETL_EXECUTION_LOG is 'ETL Tool monitoring table to store execution current instance of batch processing interfaces';
+comment on column spar.ETL_EXECUTION_LOG.interface_id               is 'Unique interface name to represent a batch execution';
+comment on column spar.ETL_EXECUTION_LOG.last_run_ts                is 'Last timestamp this interface was executed for batch execution'; 
+comment on column spar.ETL_EXECUTION_LOG.current_run_ts             is 'Current timestamp this interface was executed of this batch execution'; 
+comment on column spar.ETL_EXECUTION_LOG.updated_at                 is 'Timestamp of the last time this record was updated'; 
+comment on column spar.ETL_EXECUTION_LOG.created_at                 is 'Timestamp of the time this record was created'; 
+
+create table spar.ETL_EXECUTION_LOG_HIST(
+interface_id varchar(100) not null,
+last_run_ts timestamp,
+current_run_ts timestamp,
+execution_details text,
+updated_at  timestamp   default now() not null,
+created_at  timestamp   default now() not null
+);
+
+
+comment on table spar.ETL_EXECUTION_LOG_HIST is 'ETL Tool monitoring table to store all executed instances of batch processing interfaces';
+comment on column spar.ETL_EXECUTION_LOG_HIST.interface_id               is 'Unique interface name to represent a batch execution';
+comment on column spar.ETL_EXECUTION_LOG_HIST.last_run_ts                is 'Last timestamp this interface was executed for batch execution'; 
+comment on column spar.ETL_EXECUTION_LOG_HIST.current_run_ts             is 'Current timestamp this interface was executed of this batch execution'; 
+comment on column spar.ETL_EXECUTION_LOG_HIST.execution_details          is 'Reference text of this interface instance execution'; 
+comment on column spar.ETL_EXECUTION_LOG_HIST.updated_at                 is 'Timestamp of the last time this record was updated'; 
+comment on column spar.ETL_EXECUTION_LOG_HIST.created_at                 is 'Timestamp of the time this record was created'; 
+
+
 
 /* DDL */
 /* 
@@ -3292,16 +3375,7 @@ ALTER TABLE spar.etl_execution_log_hist
   add column day_id         date,
   add column execution_finished_at  timestamp;
 
-/* 
--- PROCESS AND PARENT/CHILD PROCESS AND ORDER
-*/  
-alter table spar.etl_execution_map  add column execution_id integer;
-alter table spar.etl_execution_map  add column execution_parent_id integer;
-alter table spar.etl_execution_map  add column execution_order integer;
-alter table spar.etl_execution_map  add column group_executor boolean default false;
-alter table spar.etl_execution_map  add column target_primary_key varchar(200);
-alter table spar.etl_execution_map  add column source_db_type varchar(200);
-alter table spar.etl_execution_map  add column target_db_type varchar(200);
+
 
 /* 
 -- DML for Generic interface_id for generic running
