@@ -152,7 +152,7 @@ def save_execution_log(db_conn, db_schema, interface_id, execution_id, process_l
     """
     result = db_conn.execute(sql_text, process_log)
     db_conn.commit()  # If everything is ok, a commit will be executed.
-    return result.rowcount  # Number of rows affected
+    
 
 
 
