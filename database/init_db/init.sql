@@ -3356,15 +3356,15 @@ interface_id 				varchar(100) not null,
 execution_id 				integer 	 not null,
 execution_status 			varchar(100) not null,
 execution_details 			text,
-source_connect_timedelta 	timestamp,
-source_extract_timedelta 	timestamp,
+source_connect_timedelta 	interval,
+source_extract_timedelta 	interval,
 source_extract_row_count 	integer,
-target_connect_timedelta 	timestamp,
-target_load_timedelta 		timestamp,
+target_connect_timedelta 	interval,
+target_load_timedelta 		interval,
 target_load_row_count 		integer,
 process_started_at 			timestamp,
 process_finished_at 		timestamp,
-process_timedelta   		timestamp,
+process_timedelta   		interval,
 last_run_ts 				timestamp,
 current_run_ts 				timestamp,
 updated_at  				timestamp   default now() not null,
@@ -3375,7 +3375,7 @@ created_at  				timestamp   default now() not null
 comment on table  spar.ETL_EXECUTION_LOG_HIST is 'ETL Tool monitoring table to store all executed instances of batch processing interfaces';
 comment on column spar.ETL_EXECUTION_LOG_HIST.interface_id       		is 'Unique interface name to represent a batch execution. Refer to EXECUTION_MAP table PK';
 comment on column spar.ETL_EXECUTION_LOG_HIST.execution_id       		is 'The execution ID that represent a batch execution. Refer to EXECUTION_MAP table PK';
-comment on column spar.ETL_EXECUTION_LOG_HIST.execution_status       	is 'Status of this execution. FAILED or SUCESS expected.';
+comment on column spar.ETL_EXECUTION_LOG_HIST.execution_status       	is 'Status of this execution. FAILED or SUCCESS expected.';
 comment on column spar.ETL_EXECUTION_LOG_HIST.execution_details         is 'Reference text of this interface instance execution'; 
 comment on column spar.ETL_EXECUTION_LOG_HIST.source_connect_timedelta  is 'Timedelta referring to how much time was needed to stablish a connection in the source database'; 
 comment on column spar.ETL_EXECUTION_LOG_HIST.source_extract_timedelta  is 'Timedelta referring to how much time was needed to execute a extract statement in the source database';

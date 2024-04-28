@@ -1,6 +1,7 @@
 import ast
 from datetime import datetime
 from pandas import DataFrame
+from datetime import timedelta
 
 """
     Gets the Execution map data from this execution
@@ -72,10 +73,10 @@ def validate_execution_map (execution_map) -> bool:
                 print("[EXECUTION MAP ERROR] Target file does not exist in Interface Id " + row["interface_id"])
                 ret = False
             if row["truncate_before_run"] and row["target_table"]=="":
-                print(f"[EXECUTION MAP ERROR] Target table is not filled for truncate statement in Interface Id {row["interface_id"]}" )
+                print(f"[EXECUTION MAP ERROR] Target table is not filled for truncate statement in Interface Id {row['interface_id']}")
                 ret = False
             if row["target_db_type"]=="ORACLE" and row["truncate_before_run"] :
-                print(f"[EXECUTION MAP ERROR] Truncate command is not allowed on Oracle as target database. Update this parameter in Interface Id {row["interface_id"]}")
+                print(f"[EXECUTION MAP ERROR] Truncate command is not allowed on Oracle as target database. Update this parameter in Interface Id {row['interface_id']}")
                 ret = False
     return (ret and exist_process)
 
@@ -113,6 +114,51 @@ def get_config(oracle_config, postgres_config, db_type):
         return None
     
        
+def include_process_log_info(ts_conn_source,ts_source_extract,rows_from_source,ts_conn_target,ts_target_load,rows_target_processed,ts_process_start, ts_process_end, ts_process_delta, log_message,execution_status):
+    process_log = {} 
+    process_log["source_connect_timedelta"]=ts_conn_source
+    process_log["source_extract_timedelta"]=ts_source_extract
+    process_log["source_extract_row_count"]=rows_from_source
+    process_log["target_connect_timedelta"]=ts_conn_target
+    process_log["target_load_timedelta"]   =ts_target_load
+    process_log["target_load_row_count"]   =rows_target_processed
+    process_log["execution_details"]       =log_message
+    process_log["execution_status"]        =execution_status
+    process_log["process_started_at"]      =ts_process_start
+    process_log["process_finished_at"]     =ts_process_end
+    process_log["process_timedelta"]       =ts_process_delta 
+    return process_log
+
+
+def save_execution_log(db_conn, db_schema, interface_id, execution_id, process_log):
+    
+    sql_text = f"""         
+    INSERT INTO {db_schema}.ETL_EXECUTION_LOG_HIST(interface_id,execution_id,last_run_ts, current_run_ts,{', '.join(process_log.keys())})                
+    with CTE_1 as (
+    select '1900-01-01'::timestamp as last_run_ts,
+        current_timestamp as current_run_ts
+        where not EXISTS( select 1 from spar.ETL_EXECUTION_SCHEDULE 
+                            where interface_id = '{interface_id}' and execution_id = {execution_id})
+    union all 
+    select last_run_ts, current_run_ts 
+    from spar.ETL_EXECUTION_SCHEDULE  where interface_id = '{interface_id}' and execution_id = {execution_id}
+    )
+    select '{interface_id}' as interface_id,
+            {execution_id} as execution_id,
+            CTE_1.last_run_ts,
+            CTE_1.current_run_ts,
+            :{', :'.join(process_log.keys())}
+    from CTE_1     
+    """
+    result = db_conn.execute(sql_text, process_log)
+    db_conn.commit()  # If everything is ok, a commit will be executed.
+    return result.rowcount  # Number of rows affected
+
+
+
+
+
+
 def get_running_data_sync_id(database_conn: object, 
                              database_schema: str) -> int:
     """
