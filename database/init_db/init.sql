@@ -3339,7 +3339,9 @@ execution_id 	integer      not null,
 last_run_ts		timestamp,
 current_run_ts  timestamp,
 updated_at      timestamp    default now() not null,
-created_at  	timestamp    default now() not null
+created_at  	timestamp    default now() not null,
+constraint etl_execution_schedule_pk
+	primary key (interface_id,execution_id)
 );
 
 comment on table  spar.ETL_EXECUTION_SCHEDULE 				is 'ETL Tool schedule table to define what delta time should be used in the next execution';

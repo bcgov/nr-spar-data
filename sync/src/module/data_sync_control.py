@@ -30,6 +30,22 @@ def get_execution_map (track_db_conn: object,
     records = track_db_conn.select(select_sync_id_stm)        
     return records.mappings().all()
 
+def get_scheduler(track_db_conn:object, database_schema:str, execution_id:int, interface_id:str) -> list:
+    select_sync_id_stm = f"""
+       select es.last_run_ts    as last_start_time,
+	        es.current_run_ts as current_start_time,
+	        CURRENT_TIMESTAMP as current_end_time
+        from {database_schema}.etl_execution_schedule es
+        where  execution_id = {execution_id} and interface_id = '{interface_id}'
+        union all 
+        select '1900-01-01'::timestamp as last_start_time,
+            '1900-01-01'::timestamp as current_start_time,
+            CURRENT_TIMESTAMP as current_end_time
+        where not exists(select 1 from {database_schema}.etl_execution_schedule es 
+                         where execution_id = {execution_id} and interface_id = '{interface_id}') """    
+    records = track_db_conn.select(select_sync_id_stm)
+    return records.mappings().all()
+
 
 """
     Validate if the Execution map data is correct
@@ -129,6 +145,20 @@ def include_process_log_info(ts_conn_source,ts_source_extract,rows_from_source,t
     process_log["process_timedelta"]       =ts_process_delta 
     return process_log
 
+
+def update_schedule_times(db_conn, db_schema, interface_id, execution_id, schedule_times):
+    sql_text = f"""
+                insert into {db_schema}.etl_execution_schedule (interface_id, execution_id, last_run_ts, current_run_ts)
+                VALUES('{interface_id}',{execution_id},:current_start_time, :current_end_time)
+                on conflict (interface_id, execution_id) 
+                do update 
+                set last_run_ts = EXCLUDED.last_run_ts,
+                    current_run_ts = EXCLUDED.current_run_ts
+                """
+    schedule = {"current_start_time": schedule_times['current_start_time'], "current_end_time": schedule_times['current_end_time']}
+    result = db_conn.execute(sql_text, schedule)
+    db_conn.commit()  # If everything is ok, a commit will be executed.
+    return None
 
 def save_execution_log(db_conn, db_schema, interface_id, execution_id, process_log):
     

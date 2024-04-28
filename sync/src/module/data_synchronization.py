@@ -41,7 +41,7 @@ def execute_instance(oracle_config, postgres_config, track_config, execution_id)
         temp_time = time.time()
         time_conn_monitor = timedelta(seconds=(temp_time-sync_start_time))
         logger.info('Getting Execution instructions for execution id {}'.format(str(execution_id)))
-        execution_map = data_sync_ctl.get_execution_map(track_db_conn,track_config['schema'],execution_id)
+        execution_map  = data_sync_ctl.get_execution_map(track_db_conn,track_config['schema'],execution_id)
 
         logger.info('Validating Execution instructions')
         try:
@@ -55,8 +55,11 @@ def execute_instance(oracle_config, postgres_config, track_config, execution_id)
             for process in processes:
                 process_stop = False
                 log_message = ""
-                source_config = data_sync_ctl.get_config(oracle_config=oracle_config, postgres_config=postgres_config,db_type=process["source_db_type"])
-                target_config = data_sync_ctl.get_config(oracle_config=oracle_config, postgres_config=postgres_config,db_type=process["target_db_type"])
+                source_config  = data_sync_ctl.get_config(oracle_config=oracle_config, postgres_config=postgres_config,db_type=process["source_db_type"])
+                target_config  = data_sync_ctl.get_config(oracle_config=oracle_config, postgres_config=postgres_config,db_type=process["target_db_type"])
+                # Get Deltas to filter source
+                schedule_times = data_sync_ctl.get_scheduler(track_db_conn,track_config['schema'],execution_id,process['interface_id'])
+
                 process_start_time = time.time()
 
                 with db_conn.database_connection(source_config) as source_db_conn:
@@ -107,7 +110,8 @@ def execute_instance(oracle_config, postgres_config, track_config, execution_id)
                                                                                 process_delta,
                                                                                 log_message,
                                                                                 'SUCCESS')
-                            data_sync_ctl.save_execution_log(track_db_conn,track_config['schema'],process["interface_id"],process["execution_id"],process_log)
+                            data_sync_ctl.save_execution_log   (track_db_conn,track_config['schema'],process["interface_id"],process["execution_id"],process_log)
+                            data_sync_ctl.update_schedule_times(track_db_conn,track_config['schema'],process["interface_id"],process["execution_id"],schedule_times[0])
                     else:
                         process_delta = timedelta(seconds=(time.time()-process_start_time))
                         process_log = data_sync_ctl.include_process_log_info(ts_conn_source=time_conn_source,
