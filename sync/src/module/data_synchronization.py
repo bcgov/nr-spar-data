@@ -55,10 +55,25 @@ def execute_instance(oracle_config, postgres_config, track_config, execution_id)
             # All processes to be executed from configuration in ETL_EXECUTION_MAP
             for process in processes:
                 #1. There are old instances to execute?
-                 
+                reprocess_logged_executions(track_db_conn,
+                                            track_config['schema'],
+                                            process, 
+                                            current_cwd, 
+                                            oracle_config, 
+                                            postgres_config, 
+                                            stored_metrics)
 
                 #2. Process current instances 
-                stored_metrics = execute_process(current_cwd, track_db_conn, track_config, process, oracle_config, postgres_config, stored_metrics)
+                schedule_times = data_sync_ctl.get_scheduler(track_db_conn,track_config['schema'],process['execution_id'],process['interface_id'])
+                stored_metrics = execute_process(base_dir=current_cwd, 
+                                                 track_db_conn=track_db_conn, 
+                                                 track_db_schema=track_config['schema'], 
+                                                 process=process, 
+                                                 oracle_config=oracle_config, 
+                                                 postgres_config=postgres_config, 
+                                                 stored_metrics=stored_metrics, 
+                                                 schedule_times=schedule_times[0],
+                                                 is_reprocess=False)
 
                 #3. There are any errors to be retried?                
         
@@ -82,24 +97,38 @@ def execute_instance(oracle_config, postgres_config, track_config, execution_id)
     
     logger.info('***** Finish ETL Run *****')
 
+def reprocess_logged_executions(track_db_conn,track_db_schema,process, current_cwd, oracle_config, postgres_config, stored_metrics):
+    schedules = data_sync_ctl.get_log_hist_schedules_to_process(track_db_conn,track_db_schema,process['execution_id'],process['interface_id'])
+    for schedule in schedules:
+        execute_process(base_dir=current_cwd, 
+                        track_db_conn=track_db_conn, 
+                        track_db_schema=track_db_schema, 
+                        process=process, 
+                        oracle_config=oracle_config, 
+                        postgres_config=postgres_config, 
+                        stored_metrics=stored_metrics, 
+                        schedule_times=schedule,
+                        is_reprocess=True)
+        data_sync_ctl.unset_reprocess(track_db_conn,track_db_schema,process['execution_id'],process['interface_id'],schedule)
+
 
 def print_process_metrics(stored_metrics):
-    logger.info(f'ETL Tool whole process took {stored_metrics['time_process']}')
-    logger.info(f'ETL Tool monitoring database connection took {stored_metrics['time_conn_monitor']}')
-    logger.info(f'ETL Tool source database connection took {stored_metrics['time_conn_source']}')
-    logger.info(f'ETL Tool source extract data took {stored_metrics['time_source_extract']} gathering {stored_metrics['rows_from_source']} rows')
-    logger.info(f'ETL Tool target database connection took {stored_metrics['time_conn_target']}')
-    logger.info(f'ETL Tool target load data took {stored_metrics['time_target_load']} processing {stored_metrics['rows_target_processed']} rows')
+    logger.info(f"ETL Tool whole process took {stored_metrics['time_process']}")
+    logger.info(f"ETL Tool monitoring database connection took {stored_metrics['time_conn_monitor']}")
+    logger.info(f"ETL Tool source database connection took {stored_metrics['time_conn_source']}")
+    logger.info(f"ETL Tool source extract data took {stored_metrics['time_source_extract']} gathering {stored_metrics['rows_from_source']} rows")
+    logger.info(f"ETL Tool target database connection took {stored_metrics['time_conn_target']}")
+    logger.info(f"ETL Tool target load data took {stored_metrics['time_target_load']} processing {stored_metrics['rows_target_processed']} rows")
 
 
-def execute_process(current_cwd, track_db_conn, track_config, process, oracle_config, postgres_config, stored_metrics):
+def execute_process(base_dir, track_db_conn, track_db_schema, process, oracle_config, postgres_config, stored_metrics,schedule_times, is_reprocess):
     process_stop = False
     log_message = ""
     source_config  = data_sync_ctl.get_config(oracle_config=oracle_config, postgres_config=postgres_config,db_type=process["source_db_type"])
     target_config  = data_sync_ctl.get_config(oracle_config=oracle_config, postgres_config=postgres_config,db_type=process["target_db_type"])
     # Get Deltas to filter source
-    schedule_times = data_sync_ctl.get_scheduler(track_db_conn,track_config['schema'],process['execution_id'],process['interface_id'])
-    schedule_param = {"start_time": schedule_times[0]['current_start_time'], "end_time": schedule_times[0]['current_end_time']}
+    #
+    schedule_param = {"start_time": schedule_times['current_start_time'], "end_time": schedule_times['current_end_time']}
     
     # Initializing metric variables
     stored_metrics['process_start_time'] = time.time()
@@ -109,6 +138,9 @@ def execute_process(current_cwd, track_db_conn, track_config, process, oracle_co
     stored_metrics['rows_target_processed'] = 0
     stored_metrics['time_target_load'] = None
     retry=False
+    tag_reprocess = ''
+    if is_reprocess:
+        tag_reprocess = '[REPROCESSED] '
 
     try:
         with db_conn.database_connection(source_config) as source_db_conn:
@@ -116,7 +148,7 @@ def execute_process(current_cwd, track_db_conn, track_config, process, oracle_co
             temp_time = time.time()
 
             data_sync_ctl.print_process(process)
-            load_file = current_cwd+process['source_file'].replace("/",separator)
+            load_file = base_dir+process['source_file'].replace("/",separator)
             logger.debug(f"Reading Extract query from: {load_file}")
             
             query_sql = open(load_file).read()
@@ -128,7 +160,7 @@ def execute_process(current_cwd, track_db_conn, track_config, process, oracle_co
             stored_metrics['rows_from_source'] = table_df.shape[0]
             if stored_metrics['rows_from_source'] < 1:
                 process_stop = True
-                log_message = f"There is no data to extract from source for execution id: {process['execution_id']} and interface id: {process['interface_id']}. Process will be skipped."
+                log_message = f"{tag_reprocess}There is no data to extract from source for execution id: {process['execution_id']} and interface id: {process['interface_id']}. Process will be skipped."
                 logger.warning(log_message)
 
             temp_time = time.time()
@@ -148,7 +180,8 @@ def execute_process(current_cwd, track_db_conn, track_config, process, oracle_co
                     stored_metrics['time_target_load'] = timedelta(seconds=(time.time()-temp_time))
 
                     #RECORD LOG
-                    log_message="Execution finished successfully"
+
+                    log_message=f"{tag_reprocess}Execution finished successfully"
                     stored_metrics['process_end_time']=datetime.now()
                     stored_metrics['process_delta'] = timedelta(seconds=(time.time()-stored_metrics['process_start_time']))
                     retry=False #Execution processed with success don't need to be reprocessed
@@ -156,8 +189,8 @@ def execute_process(current_cwd, track_db_conn, track_config, process, oracle_co
                                                                         log_message=log_message,
                                                                         execution_status='SUCCESS', 
                                                                         retry=retry)
-                    data_sync_ctl.update_schedule_times(track_db_conn,track_config['schema'],process["interface_id"],process["execution_id"],schedule_times[0])
-                    data_sync_ctl.save_execution_log   (track_db_conn,track_config['schema'],process["interface_id"],process["execution_id"],process_log)
+                    data_sync_ctl.update_schedule_times(track_db_conn,track_db_schema,process["interface_id"],process["execution_id"],schedule_times[0])
+                    data_sync_ctl.save_execution_log   (track_db_conn,track_db_schema,process["interface_id"],process["execution_id"],process_log)
             else:
                 stored_metrics['process_delta'] = timedelta(seconds=(time.time()-stored_metrics['process_start_time']))
                 stored_metrics['process_end_time'] = datetime.now()
@@ -167,20 +200,21 @@ def execute_process(current_cwd, track_db_conn, track_config, process, oracle_co
                                                                     log_message=log_message,
                                                                     execution_status='SKIPPED', ## No error, but
                                                                     retry = retry)
-                data_sync_ctl.save_execution_log(track_db_conn,track_config['schema'],process["interface_id"],process["execution_id"],process_log)
+                data_sync_ctl.save_execution_log(track_db_conn,track_db_schema,process["interface_id"],process["execution_id"],process_log)
     except Exception as err:
-        logger.critical('A fatal error has occurred', exc_info = True)
-        log_message =f"Error type: {type(err)}: {err}" 
+        logger.critical(f"{tag_reprocess}A fatal error has occurred", exc_info = True)
+        log_message =f"{tag_reprocess}Error type: {type(err)}: {err}" 
         stored_metrics['process_delta'] = timedelta(seconds=(time.time()-stored_metrics['process_start_time']))
         stored_metrics['process_end_time'] = datetime.now()
-        if process['retry_errors']:
-            retry=True #Process is mapped to retry errors, so it will be tagged to be reprocessed in next instance execution
+        #Process is mapped to retry errors, so it will be tagged to be reprocessed in next instance execution, except when a retry raised an error
+        if process['retry_errors'] and not is_reprocess:
+            retry=True 
 
         process_log = data_sync_ctl.include_process_log_info(stored_metrics=stored_metrics, 
                                                             log_message=log_message,
                                                             execution_status='ERROR',
                                                             retry = retry)
-        data_sync_ctl.save_execution_log(track_db_conn,track_config['schema'],process["interface_id"],process["execution_id"],process_log)
+        data_sync_ctl.save_execution_log(track_db_conn,track_db_schema,process["interface_id"],process["execution_id"],process_log)
 
     return stored_metrics
 
