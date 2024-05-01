@@ -21,7 +21,7 @@ def get_execution_map (track_db_conn: object,
        select interface_id , execution_id, execution_order,
               source_name, source_file, source_table,source_db_type,
               target_name, target_file, target_table,target_primary_key,target_db_type,
-              truncate_before_run,
+              truncate_before_run,retry_errors,
               case when execution_parent_id is null then 'ORCHESTRATION' else 'PROCESS' end as process_type
         from  {database_schema}.etl_execution_map
         where (execution_id = {execution_id} or execution_parent_id = {execution_id})
@@ -115,10 +115,11 @@ def get_processes_execution_map (execution_map) -> list:
 
 def print_process(process):
     print("--------------------------")
-    print("--Process Execution ID: ({}):".format(process["interface_id"]) )
-    print("--Process Execution order: {} , truncate_before_run:".format(process["execution_order"], str(process["truncate_before_run"])) )
-    print("--Process Source: {} (table: {}, file: {}):".format(process["source_name"], process["source_table"],process["source_file"]) )
-    print("--Process Target: {} (table: {}, file: {}):".format(process["target_name"], process["target_table"],process["target_file"]) )
+    print(f"--Process Execution ID: ({process["interface_id"]}):")
+    print(f"--Process Execution order: {process["execution_order"]} ")
+    print(f"--        truncate_before_run:{process["truncate_before_run"]}, Retry_errors:{process["truncate_before_run"]}." )
+    print(f"--Process Source: {process["source_name"]} (table: {process["source_table"]}, file: {process["retry_errors"]}." )
+    print(f"--Process Target: {process["target_name"]} (table: {process["target_table"]}, file: {process["target_file"]}.") 
     print("--------------------------")
 
 def get_config(oracle_config, postgres_config, db_type):
@@ -130,19 +131,20 @@ def get_config(oracle_config, postgres_config, db_type):
         return None
     
        
-def include_process_log_info(ts_conn_source,ts_source_extract,rows_from_source,ts_conn_target,ts_target_load,rows_target_processed,ts_process_start, ts_process_end, ts_process_delta, log_message,execution_status):
+def include_process_log_info(stored_metrics, log_message,execution_status, retry):
     process_log = {} 
-    process_log["source_connect_timedelta"]=ts_conn_source
-    process_log["source_extract_timedelta"]=ts_source_extract
-    process_log["source_extract_row_count"]=rows_from_source
-    process_log["target_connect_timedelta"]=ts_conn_target
-    process_log["target_load_timedelta"]   =ts_target_load
-    process_log["target_load_row_count"]   =rows_target_processed
+    process_log["source_connect_timedelta"]=stored_metrics['time_conn_source']
+    process_log["source_extract_timedelta"]=stored_metrics['time_source_extract']
+    process_log["source_extract_row_count"]=stored_metrics['rows_from_source']
+    process_log["target_connect_timedelta"]=stored_metrics['time_conn_target']
+    process_log["target_load_timedelta"]   =stored_metrics['time_target_load']
+    process_log["target_load_row_count"]   =stored_metrics['rows_target_processed']
     process_log["execution_details"]       =log_message
     process_log["execution_status"]        =execution_status
-    process_log["process_started_at"]      =ts_process_start
-    process_log["process_finished_at"]     =ts_process_end
-    process_log["process_timedelta"]       =ts_process_delta 
+    process_log["process_started_at"]      =stored_metrics['record_start_time']
+    process_log["process_finished_at"]     =stored_metrics['process_end_time']
+    process_log["process_timedelta"]       =stored_metrics['process_delta'] 
+    process_log["retry_process"]           =retry 
     return process_log
 
 
